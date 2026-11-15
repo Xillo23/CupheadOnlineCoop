@@ -11,7 +11,7 @@
 ## Cosa fa
 
 - Tutto il gioco in co-op via rete: mappa, boss, livelli run 'n gun, negozi. È il co-op locale originale di Cuphead.
-- Nessuno streaming video: il gioco gira su entrambi i PC e si scambiano solo i tasti premuti.
+- Qualità piena su entrambi gli schermi: il gioco gira su entrambi i PC, niente streaming video.
 - Menu in stile nativo, in 12 lingue (segue la lingua del gioco).
 - Installer con un clic, che trova Cuphead da solo e ha un pulsante per disinstallare.
 - Salva solo nello slot dell'host; il PC dell'ospite non scrive niente.

@@ -21,7 +21,7 @@
 ## Features
 
 - **The whole game in co-op over the network**: it runs Cuphead's own local co-op, so map, bosses, levels and cutscenes behave exactly as with two controllers on one PC.
-- **No video streaming**: both PCs run the game. Each player sees native resolution and frame rate and only sends button presses (a few bytes per frame).
+- **Full quality on both screens**: both PCs run the game, so each player sees native resolution and frame rate, with no video stream in between ([how it works](#how-it-works)).
 - **Looks native**: the menus are built from the game's own menu, font and sounds.
 - **12 languages**: the mod follows the game language (English, French, Italian, German, Spanish (Spain and Latin America), Korean, Russian, Polish, Brazilian Portuguese, Japanese, Simplified Chinese).
 - **One-click installer**: finds Cuphead by itself (Steam / GOG) and has a clean Uninstall button.
