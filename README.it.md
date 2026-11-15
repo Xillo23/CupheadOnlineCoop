@@ -19,7 +19,7 @@
 
 ## Installazione
 
-1. Scarica `CupheadOnlineCoop-x.y.z.zip` dalla pagina [**Releases**](../../releases) ed estrailo.
+1. Scarica `CupheadOnlineCoop-x.y.z.zip` dalla pagina [**Releases**](../../releases) (oppure da [Nexus Mods](https://www.nexusmods.com/cuphead/mods/225)) ed estrailo.
 2. Avvia **`CupheadOnlineCoop-Installer.exe`**: la cartella di Cuphead viene trovata da sola (altrimenti *Sfoglia…*).
 3. Premi **Installa** e avvia Cuphead come sempre.
 

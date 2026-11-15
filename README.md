@@ -11,7 +11,7 @@
 
 ![Main menu with the ONLINE CO-OP entry](docs/screenshots/main-menu.jpg)
 
-<p align="center"><b><a href="https://github.com/Xillo23/CupheadOnlineCoop/releases/latest">⬇️ Download the latest version</a></b> · <a href="#install">Install</a> · <a href="#how-to-play">How to play</a> · <a href="#playing-over-the-internet">Play over the internet</a> · <a href="#faq">FAQ</a></p>
+<p align="center"><b><a href="https://github.com/Xillo23/CupheadOnlineCoop/releases/latest">⬇️ Download the latest version</a></b> (also on <a href="https://www.nexusmods.com/cuphead/mods/225">Nexus Mods</a>) · <a href="#install">Install</a> · <a href="#how-to-play">How to play</a> · <a href="#playing-over-the-internet">Play over the internet</a> · <a href="#faq">FAQ</a></p>
 
 <p align="center"><i>Free and open source, made in my spare time. If you have fun with it, you can</i><br>
 <a href="https://ko-fi.com/xillo23"><img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Support me on Ko-fi" height="36"></a></p>
