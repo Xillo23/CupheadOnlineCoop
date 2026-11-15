@@ -4,6 +4,8 @@
 
 *Mod amatoriale non ufficiale, non affiliata a StudioMDHR.* · [English](README.md)
 
+<p align="center"><a href="https://ko-fi.com/xillo23"><img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Sostienimi su Ko-fi" height="36"></a></p>
+
 ![Menu principale con la voce CO-OP ONLINE](docs/screenshots/main-menu.jpg)
 
 ## Cosa fa

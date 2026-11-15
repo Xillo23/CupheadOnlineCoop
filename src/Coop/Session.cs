@@ -259,7 +259,13 @@ namespace CupheadLanCoop
             Add(list, "Rewired_Core.dll", Path.Combine(managed, "Rewired_Core.dll"));
             List<string> plugins = new List<string>(Directory.GetFiles(BepInEx.Paths.PluginPath, "*.dll", SearchOption.AllDirectories));
             plugins.Sort(StringComparer.OrdinalIgnoreCase);
-            foreach (string p in plugins) Add(list, "plugins/" + Path.GetFileName(p), p);
+            string self = Path.GetFullPath(typeof(CoopPlugin).Assembly.Location);
+            foreach (string p in plugins)
+            {
+                // Our own DLL is covered by the version check; its bytes differ between builds of the same version.
+                if (string.Equals(Path.GetFullPath(p), self, StringComparison.OrdinalIgnoreCase)) continue;
+                Add(list, "plugins/" + Path.GetFileName(p), p);
+            }
             List<string> configs = new List<string>(Directory.GetFiles(BepInEx.Paths.ConfigPath, "*.cfg"));
             configs.Sort(StringComparer.OrdinalIgnoreCase);
             foreach (string c in configs)

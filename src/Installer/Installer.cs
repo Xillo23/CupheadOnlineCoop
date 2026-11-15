@@ -65,6 +65,19 @@ namespace CupheadOnlineCoopInstaller
                 "BepInExは既にインストール済みのため、MODのみ追加しました。", "已安装 BepInEx：仅添加了本模组。" } },
             { "removed", new[] { "Uninstalled.", "Désinstallé.", "Disinstallato.", "Deinstalliert.", "Desinstalado.", "제거되었습니다.", "Удалено.", "Odinstalowano.", "Desinstalado.", "アンインストールしました。", "已卸载。" } },
             { "error", new[] { "Error: ", "Erreur : ", "Errore: ", "Fehler: ", "Error: ", "오류: ", "Ошибка: ", "Błąd: ", "Erro: ", "エラー：", "错误：" } },
+            { "support", new[] { "This mod is free. If you enjoy it, a small donation helps me keep improving it ❤",
+                "Ce mod est gratuit. Si vous l'aimez, un petit don m'aide à continuer à l'améliorer ❤",
+                "Questa mod è gratuita. Se ti piace, una piccola donazione mi aiuta a continuare a migliorarla ❤",
+                "Diese Mod ist kostenlos. Wenn sie dir gefällt, hilft mir eine kleine Spende, sie weiter zu verbessern ❤",
+                "Este mod es gratis. Si te gusta, una pequeña donación me ayuda a seguir mejorándolo ❤",
+                "이 모드는 무료입니다. 마음에 드셨다면 작은 후원이 개선을 계속하는 데 큰 힘이 됩니다 ❤",
+                "Мод бесплатный. Если он вам нравится, небольшое пожертвование поможет мне его улучшать ❤",
+                "Ten mod jest darmowy. Jeśli ci się podoba, mała darowizna pomoże mi go dalej ulepszać ❤",
+                "Este mod é gratuito. Se você gostar, uma pequena doação me ajuda a continuar melhorando ❤",
+                "このMODは無料です。気に入ったら、少額の寄付が今後の改善の励みになります ❤",
+                "本模组免费。如果你喜欢，一点小小的捐助能帮助我继续改进它 ❤" } },
+            { "donate", new[] { "☕ Support on Ko-fi", "☕ Soutenir sur Ko-fi", "☕ Sostienimi su Ko-fi", "☕ Auf Ko-fi unterstützen", "☕ Apoyar en Ko-fi",
+                "☕ Ko-fi에서 후원하기", "☕ Поддержать на Ko-fi", "☕ Wesprzyj na Ko-fi", "☕ Apoiar no Ko-fi", "☕ Ko-fiで支援する", "☕ 在 Ko-fi 上支持" } },
             { "notice", new[] { "Unofficial fan mod, not affiliated with StudioMDHR. Both players need the same version.",
                 "Mod de fan non officiel, sans lien avec StudioMDHR. Les deux joueurs ont besoin de la même version.",
                 "Mod amatoriale non ufficiale, non affiliata a StudioMDHR. Servono la stessa versione su entrambi i PC.",
@@ -103,7 +116,7 @@ namespace CupheadOnlineCoopInstaller
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false;
             StartPosition = FormStartPosition.CenterScreen;
-            ClientSize = new Size(560, 230);
+            ClientSize = new Size(560, 306);
             try { Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
 
             Label pick = new Label { Text = Tx.Get("pick"), Location = new Point(16, 16), AutoSize = true };
@@ -119,14 +132,25 @@ namespace CupheadOnlineCoopInstaller
             uninstall.Click += delegate { Run(Uninstall); };
             status.SetBounds(16, 130, 528, 56);
             Label notice = new Label { Text = Tx.Get("notice"), ForeColor = Color.DimGray };
-            notice.SetBounds(16, 190, 528, 36);
-            LinkLabel kofi = new LinkLabel { Text = "☕ Ko-fi", TextAlign = ContentAlignment.MiddleRight };
-            kofi.SetBounds(360, 84, 184, 18);
-            kofi.LinkClicked += delegate { Open("https://ko-fi.com/xillo23"); };
-            LinkLabel site = new LinkLabel { Text = "GitHub", TextAlign = ContentAlignment.MiddleRight };
-            site.SetBounds(360, 104, 184, 18);
+            notice.SetBounds(16, 266, 450, 36);
+            LinkLabel site = new LinkLabel { Text = "GitHub", TextAlign = ContentAlignment.TopRight };
+            site.SetBounds(470, 266, 74, 20);
             site.LinkClicked += delegate { Open("https://github.com/Xillo23/CupheadOnlineCoop"); };
-            Controls.AddRange(new Control[] { pick, path, browse, install, uninstall, status, notice, kofi, site });
+
+            // Donation box: visible, never blocking.
+            Color coral = Color.FromArgb(255, 94, 91);
+            Panel box = new Panel { BackColor = Color.FromArgb(255, 239, 238) };
+            box.SetBounds(16, 192, 528, 64);
+            Label ask = new Label { Text = Tx.Get("support"), ForeColor = Color.FromArgb(120, 30, 30) };
+            ask.SetBounds(10, 8, 300, 48);
+            Button kofi = new Button { Text = Tx.Get("donate"), BackColor = coral, ForeColor = Color.White, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
+            kofi.Font = new Font("Segoe UI", 10f, FontStyle.Bold);
+            kofi.FlatAppearance.BorderSize = 0;
+            kofi.SetBounds(318, 12, 200, 40);
+            kofi.Click += delegate { Open("https://ko-fi.com/xillo23"); };
+            box.Controls.Add(ask);
+            box.Controls.Add(kofi);
+            Controls.AddRange(new Control[] { pick, path, browse, install, uninstall, status, box, notice, site });
             AcceptButton = install;
             path.Text = Detect() ?? "";
         }

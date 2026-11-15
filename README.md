@@ -13,6 +13,9 @@
 
 <p align="center"><b><a href="https://github.com/Xillo23/CupheadOnlineCoop/releases/latest">⬇️ Download the latest version</a></b> · <a href="#install">Install</a> · <a href="#how-to-play">How to play</a> · <a href="#playing-over-the-internet">Play over the internet</a> · <a href="#faq">FAQ</a></p>
 
+<p align="center"><i>Free and open source, made in my spare time. If you have fun with it, you can</i><br>
+<a href="https://ko-fi.com/xillo23"><img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Support me on Ko-fi" height="36"></a></p>
+
 ---
 
 ## Features
@@ -41,6 +44,8 @@
 
 > Windows SmartScreen may warn you because the installer is not signed by a company: click *More info → Run anyway*.
 > If you prefer not to run it, use the manual install instead.
+
+> ☕ **Enjoying the mod?** It's free and always will be. [A small tip on Ko-fi](https://ko-fi.com/xillo23) keeps updates and fixes coming.
 
 **Manual install:** copy everything inside the `manual-install` folder into the Cuphead folder (next to `Cuphead.exe`).
 
@@ -152,11 +157,13 @@ The build references the game's assemblies from **your own installation**. No ga
 
 ## Support the project
 
-The mod is free and will stay free. If it saved your co-op nights, you can support its development. Thank you! ❤️
+This mod took many evenings of reverse-engineering, testing and debugging, and it's free for everyone. If it gave you and a friend some good co-op nights, please consider supporting it:
 
-**[☕ Support on Ko-fi](https://ko-fi.com/xillo23)**
+<p align="center"><a href="https://ko-fi.com/xillo23"><img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Support me on Ko-fi" height="40"></a></p>
 
-Starring the repository ⭐ and sharing it with other Cuphead players helps a lot too.
+Donations are completely optional and unlock nothing: everyone gets the same mod. They help fund updates, more testing (plane levels, DLC) and new features.
+Can't donate? **Starring the repo ⭐**, reporting bugs and sharing it with other Cuphead players helps a lot too.
+
 ## Legal
 
 - This is a free, non-commercial fan project. **Cuphead** is a trademark of StudioMDHR Entertainment Inc. The mod is not affiliated with, endorsed or sponsored by StudioMDHR. All game content belongs to its owners.
