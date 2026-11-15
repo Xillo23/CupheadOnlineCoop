@@ -2,9 +2,16 @@
 
 **Play Cuphead's two-player co-op with a friend on another PC — the real game, at full quality, on both screens.**
 
+[![Latest release](https://img.shields.io/github/v/release/Xillo23/CupheadOnlineCoop?label=download&color=2ea44f)](https://github.com/Xillo23/CupheadOnlineCoop/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/Xillo23/CupheadOnlineCoop/total?color=blue)](https://github.com/Xillo23/CupheadOnlineCoop/releases)
+[![License: MIT](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
+[![Support on Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20the%20mod-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/xillo23)
+
 *Unofficial fan mod. Not affiliated with or endorsed by StudioMDHR.* · [Italiano](README.it.md)
 
 ![Main menu with the ONLINE CO-OP entry](docs/screenshots/main-menu.jpg)
+
+<p align="center"><b><a href="https://github.com/Xillo23/CupheadOnlineCoop/releases/latest">⬇️ Download the latest version</a></b> · <a href="#install">Install</a> · <a href="#how-to-play">How to play</a> · <a href="#playing-over-the-internet">Play over the internet</a> · <a href="#faq">FAQ</a></p>
 
 ---
 
@@ -30,6 +37,7 @@
 1. Download `CupheadOnlineCoop-x.y.z.zip` from the [**Releases**](../../releases) page and extract it.
 2. Run **`CupheadOnlineCoop-Installer.exe`**. The Cuphead folder is detected automatically; if not, click *Browse…* and pick the folder that contains `Cuphead.exe`.
 3. Click **Install**, then start Cuphead as usual (from Steam).
+<p align="center"><img src="docs/screenshots/installer.png" width="550" alt="Installer"></p>
 
 > Windows SmartScreen may warn you because the installer is not signed by a company: click *More info → Run anyway*.
 > If you prefer not to run it, use the manual install instead.
@@ -87,13 +95,38 @@ The mod creates `BepInEx\config\it.cupheadlan.coop.cfg` the first time the game 
 - **"Different installations" / "Different mod version"**: both PCs need the same game version, DLC and mods. The message lists the files that differ.
 - **The friend can't find or reach the game**: try *ENTER IP*, check that both are on the same VPN network, and that Windows Firewall allows Cuphead.
 - **Frequent "Slow connection"**: use a wired connection, close downloads and streaming, or try Tailscale / port forwarding instead of a relayed VPN.
-- **Logs**: `BepInEx\coop-logs\` in the Cuphead folder. Please attach them (from both PCs) when you open an issue.
+- **Logs**: `BepInEx\coop-logs\` in the Cuphead folder. Please attach them (from both PCs) when you [open an issue](../../issues/new/choose).
 
+## Updating
+
+Download the new release and run its installer: **Install** over the old version replaces the mod and keeps your settings.
+Both players must update, because different versions refuse to connect (the message says which version each side has).
+
+## FAQ
+
+**Do both players need the game?**
+Yes. Both PCs run the game, so each player needs their own copy and the mod installed.
+
+**Does it work with controllers / keyboard?**
+Yes. Each player uses their own controls exactly as in single player. On each PC, use the controls you would use for Player 1. The mod assigns them to the right player.
+
+**Whose progress is saved?**
+The host's. The game uses the host's save slot (coins, weapons, bosses beaten), and the guest's PC writes nothing. Take turns hosting if you both want progress on your own saves.
+
+**Can it work with more than two players?**
+No. Cuphead's co-op is for two players.
+
+**Does it use the internet, Steam or any server?**
+No. The two PCs connect directly to each other (or through the VPN you choose). Nothing is sent anywhere else.
+
+**Is it safe? Will I get banned?**
+Cuphead has no online features or anti-cheat. The mod changes nothing on disk, and Uninstall restores the original folder.
 
 ## Status and known limitations
 
 This is an early release (0.x). Played so far on two real PCs over the internet: the map, the Tutorial and several bosses, with progress saved normally.
 Less tested: plane levels, the DLC, the GOG version, and game pause opened by the guest. Bug reports with logs are very welcome.
+
 ## How it works
 
 The mod uses *deterministic input lockstep*, the technique classic fighting and strategy games use:
@@ -116,6 +149,14 @@ Requirements: Windows, Cuphead with BepInEx 5.4.22 installed (the installer does
 
 The build references the game's assemblies from **your own installation**. No game code or assets are stored in this repository.
 
+
+## Support the project
+
+The mod is free and will stay free. If it saved your co-op nights, you can support its development. Thank you! ❤️
+
+**[☕ Support on Ko-fi](https://ko-fi.com/xillo23)**
+
+Starring the repository ⭐ and sharing it with other Cuphead players helps a lot too.
 ## Legal
 
 - This is a free, non-commercial fan project. **Cuphead** is a trademark of StudioMDHR Entertainment Inc. The mod is not affiliated with, endorsed or sponsored by StudioMDHR. All game content belongs to its owners.

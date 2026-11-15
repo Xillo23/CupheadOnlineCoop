@@ -31,7 +31,7 @@ $zip = Join-Path $work 'payload.zip'
 [IO.Compression.ZipFile]::CreateFromDirectory($payload, $zip)
 $fw = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319'
 $exe = Join-Path $work 'CupheadOnlineCoop-Installer.exe'
-& (Join-Path $fw 'csc.exe') /nologo /optimize+ /target:winexe "/out:$exe" "/resource:$zip,payload.zip" `
+& (Join-Path $fw 'csc.exe') /nologo /codepage:65001 /optimize+ /target:winexe "/out:$exe" "/resource:$zip,payload.zip" `
     "/reference:$fw\System.IO.Compression.dll" /reference:System.Windows.Forms.dll /reference:System.Drawing.dll `
     (Join-Path $root 'src\Installer\Installer.cs')
 if ($LASTEXITCODE) { throw 'Installer build failed.' }

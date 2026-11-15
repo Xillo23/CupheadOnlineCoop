@@ -34,3 +34,7 @@ Menu principale → **CO-OP ONLINE**.
 Via internet serve che i due PC si vedano: stessa rete di casa, oppure **Tailscale** (consigliato), **Radmin VPN**, **ZeroTier**, oppure la porta **TCP 28147** aperta sul router dell'host. Con un ping sotto 80 ms si gioca benissimo; il cavo aiuta più di tutto.
 
 Guida completa, impostazioni, problemi comuni e aspetti legali: vedi il [README in inglese](README.md).
+
+## Supporta il progetto
+
+La mod è gratuita e lo resterà. Se ti ha regalato belle serate in co-op puoi sostenerla su **[Ko-fi ☕](https://ko-fi.com/xillo23)**. Grazie! ❤️

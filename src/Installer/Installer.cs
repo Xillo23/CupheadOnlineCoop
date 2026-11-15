@@ -22,8 +22,12 @@ namespace CupheadOnlineCoopInstaller
     static class Program
     {
         [STAThread]
-        static void Main()
+        static void Main(string[] args)
         {
+            // Optional: --lang en (default = Windows display language).
+            int i = Array.IndexOf(args, "--lang");
+            if (i >= 0 && i + 1 < args.Length)
+                try { System.Threading.Thread.CurrentThread.CurrentUICulture = new CultureInfo(args[i + 1]); } catch { }
             Application.EnableVisualStyles();
             Application.Run(new MainForm());
         }
@@ -116,9 +120,20 @@ namespace CupheadOnlineCoopInstaller
             status.SetBounds(16, 130, 528, 56);
             Label notice = new Label { Text = Tx.Get("notice"), ForeColor = Color.DimGray };
             notice.SetBounds(16, 190, 528, 36);
-            Controls.AddRange(new Control[] { pick, path, browse, install, uninstall, status, notice });
+            LinkLabel kofi = new LinkLabel { Text = "☕ Ko-fi", TextAlign = ContentAlignment.MiddleRight };
+            kofi.SetBounds(360, 84, 184, 18);
+            kofi.LinkClicked += delegate { Open("https://ko-fi.com/xillo23"); };
+            LinkLabel site = new LinkLabel { Text = "GitHub", TextAlign = ContentAlignment.MiddleRight };
+            site.SetBounds(360, 104, 184, 18);
+            site.LinkClicked += delegate { Open("https://github.com/Xillo23/CupheadOnlineCoop"); };
+            Controls.AddRange(new Control[] { pick, path, browse, install, uninstall, status, notice, kofi, site });
             AcceptButton = install;
             path.Text = Detect() ?? "";
+        }
+
+        static void Open(string url)
+        {
+            try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); } catch { }
         }
 
         void Browse()

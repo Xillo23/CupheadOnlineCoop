@@ -28,7 +28,7 @@ if (-not $SkipTests) {
 }
 
 # Game profile: CLR 2.0 / .NET 3.5, C# 3, local references only.
-$common = @('/nologo', '/noconfig', '/nostdlib+', '/langversion:3', '/optimize+', '/warn:4', '/platform:anycpu')
+$common = @('/nologo', '/codepage:65001', '/noconfig', '/nostdlib+', '/langversion:3', '/optimize+', '/warn:4', '/platform:anycpu')
 foreach ($file in @('mscorlib.dll', 'System.dll', 'System.Core.dll')) { $common += '/reference:' + (Join-Path $managed $file) }
 foreach ($file in @('UnityEngine.dll', 'UnityEngine.CoreModule.dll', 'UnityEngine.UI.dll', 'UnityEngine.UIModule.dll', 'UnityEngine.IMGUIModule.dll',
         'UnityEngine.InputModule.dll', 'UnityEngine.TextRenderingModule.dll', 'UnityEngine.AudioModule.dll', 'UnityEngine.AnimationModule.dll',
