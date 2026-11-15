@@ -124,8 +124,11 @@ No. Cuphead's co-op is for two players.
 **Does it use the internet, Steam or any server?**
 No. The two PCs connect directly to each other (or through the VPN you choose). Nothing is sent anywhere else.
 
-**Is it safe? Will I get banned?**
-Cuphead has no online features or anti-cheat. The mod changes nothing on disk, and Uninstall restores the original folder.
+**Is it safe? Can I get banned?**
+Cuphead is an offline game without online services or anti-cheat. The mod does not modify any game file: it only adds the BepInEx loader files, and Uninstall removes them. As with any mod, use it at your own risk.
+
+**What about Steam achievements?**
+The host earns them normally. The guest's PC writes nothing (no saves, no achievements) during a session.
 
 ## Status and known limitations
 

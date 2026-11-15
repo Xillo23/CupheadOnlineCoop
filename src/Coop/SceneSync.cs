@@ -8,7 +8,8 @@ using UnityEngine.SceneManagement;
 
 namespace CupheadLanCoop
 {
-    // Scene loads in session. Copy of SceneLoader.loop_cr where:
+    // Scene loads in session: our own loading sequence replaces SceneLoader.loop_cr and drives the
+    // game's original coroutines (in_cr, load_cr, icon fades, out_cr) via reflection, so that:
     //  - in_cr runs in lockstep (same frames on both PCs);
     //  - PlayerData hash barrier, then free loading frames (neutral input, no network wait);
     //  - blocking barrier inside sceneLoaded (after Awake, before any Start/Update), lockstep restarts at frame 0;
