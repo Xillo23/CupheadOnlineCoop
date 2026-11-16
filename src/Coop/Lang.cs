@@ -113,6 +113,8 @@ namespace CupheadLanCoop
             Add("ok", "OK", "OK", "OK", "OK", "ACEPTAR", "ACEPTAR", "확인", "ОК", "OK", "OK", "OK", "确定");
             Add("on", "ON", "OUI", "SI", "AN", "SÍ", "SÍ", "켜짐", "ВКЛ", "WŁ.", "SIM", "オン", "开");
             Add("off", "OFF", "NON", "NO", "AUS", "NO", "NO", "꺼짐", "ВЫКЛ", "WYŁ.", "NÃO", "オフ", "关");
+            Add("upnp_toggle", "AUTO PORT (UPNP): {0}", "PORT AUTO (UPNP) : {0}", "PORTA AUTOMATICA (UPNP): {0}", "AUTO-PORT (UPNP): {0}", "PUERTO AUTOMÁTICO (UPNP): {0}", "PUERTO AUTOMÁTICO (UPNP): {0}",
+                "자동 포트 (UPNP): {0}", "АВТОПОРТ (UPNP): {0}", "AUTO PORT (UPNP): {0}", "PORTA AUTOMÁTICA (UPNP): {0}", "自動ポート (UPNP): {0}", "自动端口 (UPNP)：{0}");
             Add("net_off", "NOT AVAILABLE", "INDISPONIBLE", "NON DISPONIBILE", "NICHT VERFÜGBAR", "NO DISPONIBLE", "NO DISPONIBLE",
                 "사용 불가", "НЕДОСТУПЕН", "NIEDOSTĘPNY", "INDISPONÍVEL", "利用不可", "不可用");
             Add("join_hint", "CHECK THE IP. IF IT STILL FAILS, BOTH OF YOU USE TAILSCALE.", "VÉRIFIEZ L'IP. SI ÇA NE MARCHE TOUJOURS PAS, UTILISEZ TOUS LES DEUX TAILSCALE.",

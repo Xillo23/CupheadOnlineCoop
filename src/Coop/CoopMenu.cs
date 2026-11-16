@@ -457,7 +457,7 @@ namespace CupheadLanCoop
                     if (CoopPlugin.UpnpChoice != "ask" && !CoopPlugin.DumpUi)
                     {
                         bool on = CoopPlugin.UpnpChoice == "yes";
-                        e.Add(new Entry(L.Tr("internet") + ": " + L.Tr(on ? "on" : "off"), delegate { CoopPlugin.SetUpnp(!on); }, false));
+                        e.Add(new Entry(L.Tr("upnp_toggle", L.Tr(on ? "on" : "off")), delegate { CoopPlugin.SetUpnp(!on); }, false));
                     }
                     e.Add(new Entry(L.Tr("back"), delegate { Session.Cancel(); CloseSubmenu(); }, false));
                     AddError(e);
@@ -557,7 +557,7 @@ namespace CupheadLanCoop
                 if (upnp.State == PortState.Open)
                 {
                     string where = upnp.PublicIp.Length == 0 ? "" : upnp.PublicIp + (upnp.PublicPort != CoopPlugin.Port ? ":" + upnp.PublicPort : "");
-                    result.Add(internet + (where.Length == 0 ? L.Tr("port_open") : where + (compact ? "" : " " + L.Tr("port_open"))));
+                    result.Add(internet + (where.Length == 0 ? L.Tr("port_open") : where + (compact ? " (UPNP)" : " " + L.Tr("port_open"))));
                 }
                 else if (upnp.State == PortState.Working) result.Add(internet + L.Tr("upnp_working"));
                 else if (!compact) problem = internet + L.Tr("net_off");
