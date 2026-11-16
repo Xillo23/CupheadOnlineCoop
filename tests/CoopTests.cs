@@ -88,6 +88,39 @@ static class CoopTests
             host.Stop();
         }
 
+        // Addresses shown to the player.
+        NetKind k;
+        Check(NetAddresses.Classify("Intel Ethernet | Ethernet", new byte[] { 192, 168, 1, 20 }, true, out k) && k == NetKind.Lan, "lan");
+        Check(NetAddresses.Classify("Famatech Radmin VPN Ethernet Adapter", new byte[] { 26, 1, 2, 3 }, false, out k) && k == NetKind.Radmin, "radmin");
+        Check(NetAddresses.Classify("Tailscale Tunnel | Tailscale", new byte[] { 100, 101, 2, 3 }, false, out k) && k == NetKind.Tailscale, "tailscale");
+        Check(NetAddresses.Classify("ZeroTier Virtual Port", new byte[] { 10, 147, 0, 5 }, false, out k) && k == NetKind.ZeroTier, "zerotier");
+        Check(!NetAddresses.Classify("Hyper-V Virtual Ethernet Adapter | vEthernet (WSL)", new byte[] { 172, 20, 0, 1 }, false, out k), "hyper-v hidden");
+        Check(!NetAddresses.Classify("VirtualBox Host-Only Ethernet Adapter", new byte[] { 192, 168, 56, 1 }, false, out k), "virtualbox hidden");
+        Check(!NetAddresses.Classify("Intel Wi-Fi | Wi-Fi", new byte[] { 169, 254, 3, 4 }, false, out k), "link-local hidden");
+        Check(!NetAddresses.Classify("Intel Wi-Fi | Wi-Fi", new byte[] { 8, 8, 8, 8 }, true, out k), "public nic not lan");
+        System.Collections.Generic.List<NetAddress> picked = NetAddresses.Pick(new System.Collections.Generic.List<NetAddress>(new NetAddress[] {
+            new NetAddress(NetKind.Radmin, IPAddress.Parse("26.1.2.3"), false), new NetAddress(NetKind.Lan, IPAddress.Parse("192.168.56.1"), false),
+            new NetAddress(NetKind.Lan, IPAddress.Parse("192.168.1.20"), true) }));
+        Check(picked.Count == 2 && picked[0].Address.ToString() == "192.168.1.20" && picked[1].Kind == NetKind.Radmin, "pick one per kind, gateway first");
+        Check(NetAddresses.IsPublic("203.0.113.7") && !NetAddresses.IsPublic("100.70.1.1") && !NetAddresses.IsPublic("192.168.0.2") && !NetAddresses.IsPublic("") && !NetAddresses.IsPublic("0.0.0.0"), "public ip");
+
+        // UPnP parsing.
+        string desc = "<?xml version=\"1.0\"?><root xmlns=\"urn:schemas-upnp-org:device-1-0\"><device><serviceList>" +
+            "<service><serviceType>urn:schemas-upnp-org:service:Layer3Forwarding:1</serviceType><controlURL>/l3f</controlURL></service>" +
+            "<service><serviceType>urn:schemas-upnp-org:service:WANPPPConnection:1</serviceType><controlURL>/ppp</controlURL></service>" +
+            "<service><serviceType>urn:schemas-upnp-org:service:WANIPConnection:1</serviceType><controlURL>ctl/IPConn</controlURL></service>" +
+            "</serviceList></device></root>";
+        var services = PortOpener.Services(desc, "http://192.168.1.1:5000/rootDesc.xml");
+        Check(services.Count == 2 && services[0].Value == "http://192.168.1.1:5000/ctl/IPConn" && services[1].Value == "http://192.168.1.1:5000/ppp", "upnp services " + services.Count);
+        Check(PortOpener.Header("HTTP/1.1 200 OK\r\nCache-Control: max-age=120\r\nLocation: http://192.168.1.1:1900/igd.xml\r\n\r\n", "LOCATION") == "http://192.168.1.1:1900/igd.xml", "ssdp location");
+        string fault = "<s:Envelope><s:Body><s:Fault><detail><UPnPError xmlns=\"urn:schemas-upnp-org:control-1-0\"><errorCode>718</errorCode></UPnPError></detail></s:Fault></s:Body></s:Envelope>";
+        Check(PortOpener.ErrorCode(fault, 500) == 718 && PortOpener.ErrorCode("", 404) == 404, "soap error code");
+        Check(PortOpener.Tag("<u:GetExternalIPAddressResponse><NewExternalIPAddress>203.0.113.7</NewExternalIPAddress></u:GetExternalIPAddressResponse>", "NewExternalIPAddress") == "203.0.113.7", "external ip tag");
+        int status;
+        string chunked = PortOpener.ParseResponse(System.Text.Encoding.ASCII.GetBytes("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nhello\r\n6\r\n world\r\n0\r\n\r\n"), out status);
+        Check(status == 200 && chunked == "hello world", "http chunked");
+        Check(PortOpener.ParseResponse(System.Text.Encoding.ASCII.GetBytes("HTTP/1.0 500 Internal Server Error\r\nContent-Length: 3\r\n\r\nabc"), out status) == "abc" && status == 500, "http plain");
+
         Console.WriteLine((failures == 0 ? "PASS " : "FAIL ") + (checks - failures) + "/" + checks + " controlli coop");
         return failures == 0 ? 0 : 1;
     }

@@ -27,6 +27,7 @@
 - **One-click installer**: finds Cuphead by itself (Steam / GOG) and has a clean Uninstall button.
 - **Safe for saves**: progress is saved only in the host's save slot. The guest's PC writes nothing.
 - **Self-correcting**: if the two games drift apart slightly, the mod fixes it on the fly. It never restarts the level.
+- **Opens the router port by itself (UPnP)** when you host, also with two routers in a row (provider modem + your router), and closes it when you stop. It asks the first time.
 - **Finds games automatically** on the same network and on most virtual LANs (e.g. Radmin VPN, ZeroTier). You can always connect by IP.
 
 ## Requirements
@@ -70,16 +71,17 @@ The game starts on both PCs as soon as the friend connects. From then on it is n
 
 ### Playing over the internet
 
-The mod needs the two PCs to reach each other. Pick one option:
+When you host, the mod shows the addresses to give your friend at the top of the screen (*INTERNET*, *LAN*, and any VPN you have).
 
 | Option | Setup | Notes |
 |---|---|---|
+| **Automatic (UPnP)** | nothing: answer *YES* the first time you host | The mod opens the port on your router (and on the provider's modem, if there are two). Friend uses *ENTER IP* with the *INTERNET* address. If it can't, a short message tells you why and what to do. |
 | **Same home network** | nothing | Games appear automatically in *JOIN GAME*. |
 | **[Tailscale](https://tailscale.com)** (recommended) | both install it and log in to the same network | Usually connects the two PCs directly → low ping. Use *ENTER IP* with the host's `100.x.x.x` address. |
 | **[Radmin VPN](https://www.radmin-vpn.com)** / **[ZeroTier](https://www.zerotier.com)** | both join the same network | Games usually appear automatically. |
-| **Port forwarding** | host opens **TCP 28147** on their router | Lowest possible ping. Friend uses the host's public IP. Not possible on some ISPs (CGNAT). |
+| **Port forwarding** (manual) | host opens **TCP 28147** on their router | Only if UPnP is off and you can't turn it on. Not possible on some ISPs (CGNAT). |
 
-The first time, Windows may ask whether to allow Cuphead on the network: allow it on **private** networks.
+The first time, Windows may ask whether to allow Cuphead on the network: press **Allow**.
 
 **Ping matters.** Both games advance together, so a late packet makes both wait a moment ("Slow connection: waiting for your partner…"). Under ~80 ms feels great. A wired connection helps more than anything else.
 
@@ -91,6 +93,7 @@ The mod creates `BepInEx\config\it.cupheadlan.coop.cfg` the first time the game 
 |---|---|---|
 | `General.PlayerName` | *(computer name)* | Name shown to your partner |
 | `General.Language` | `auto` | Mod text language: `auto` follows the game, or `en fr it de es es-419 ko ru pl pt-br ja zh` |
+| `Network.UPnP` | `ask` | Open the router port automatically when hosting: `ask` (first time), `yes`, `no`. Also switchable in the menu (*INTERNET: ON/OFF*) |
 | `Network.TcpPort` | `28147` | Game port (same on both PCs) |
 | `Network.DiscoveryPort` | `28148` | UDP port for finding games on the network |
 | `Network.InputDelay` | `0` | Input delay in frames. `0` = automatic from ping |
@@ -98,7 +101,7 @@ The mod creates `BepInEx\config\it.cupheadlan.coop.cfg` the first time the game 
 ## Troubleshooting
 
 - **"Different installations" / "Different mod version"**: both PCs need the same game version, DLC and mods. The message lists the files that differ.
-- **The friend can't find or reach the game**: try *ENTER IP*, check that both are on the same VPN network, and that Windows Firewall allows Cuphead.
+- **The friend can't find or reach the game**: check the IP, and that Windows Firewall allows Cuphead. If the host sees *INTERNET NOT AVAILABLE*, both install [Tailscale](https://tailscale.com) and use the host's `100.x.x.x` address.
 - **Frequent "Slow connection"**: use a wired connection, close downloads and streaming, or try Tailscale / port forwarding instead of a relayed VPN.
 - **Logs**: `BepInEx\coop-logs\` in the Cuphead folder. Please attach them (from both PCs) when you [open an issue](../../issues/new/choose).
 

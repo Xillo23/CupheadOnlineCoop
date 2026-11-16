@@ -33,7 +33,7 @@ Menu principale → **CO-OP ONLINE**.
 - **Host** (Giocatore 1): **CREA PARTITA** → scegli lo slot. In alto compaiono "In attesa del giocatore 2" e i tuoi IP.
 - **Amico** (Giocatore 2): **UNISCITI** → scegli la partita trovata oppure **INSERISCI IP**.
 
-Via internet serve che i due PC si vedano: stessa rete di casa, oppure **Tailscale** (consigliato), **Radmin VPN**, **ZeroTier**, oppure la porta **TCP 28147** aperta sul router dell'host. Con un ping sotto 80 ms si gioca benissimo; il cavo aiuta più di tutto.
+Via internet: quando crei la partita la mod apre da sola la porta sul router (UPnP, anche con modem dell'operatore + router), te lo chiede la prima volta, e in alto mostra l'IP *INTERNET* da dare all'amico. Se non ci riesce te lo dice: in quel caso usate **Tailscale** (consigliato), **Radmin VPN** o **ZeroTier**, oppure aprite a mano la porta **TCP 28147**. Se Windows chiede il permesso, premi **Consenti**. Con un ping sotto 80 ms si gioca benissimo; il cavo aiuta più di tutto.
 
 Guida completa, impostazioni, problemi comuni e aspetti legali: vedi il [README in inglese](README.md).
 

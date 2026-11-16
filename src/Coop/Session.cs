@@ -31,6 +31,7 @@ namespace CupheadLanCoop
         public static bool SaveGuardArmed;
 
         static NetHost listener;
+        public static PortOpener Upnp; // null = UPnP off (config, test on one PC)
         static NetLink link;
         static LanDiscovery discovery;
         static bool welcomed;
@@ -65,11 +66,19 @@ namespace CupheadLanCoop
             listener = NetHost.Listen(CoopPlugin.Port, out error);
             if (listener == null) { Error = error; return; }
             discovery = LanDiscovery.StartResponder(CoopPlugin.DiscoveryPort, CoopPlugin.Version, CoopPlugin.PlayerName, CoopPlugin.Port);
+            if (CoopPlugin.FakePublicIp != null) Upnp = PortOpener.Faked(CoopPlugin.FakePublicIp, CoopPlugin.Port);
+            else if (CoopPlugin.UseUpnp) Upnp = PortOpener.Start(CoopPlugin.Port);
             IsHost = true;
             State = CoopState.Hosting;
             Determinism.Background(true);
             Error = "";
             CoopPlugin.Log("Host in ascolto su TCP " + CoopPlugin.Port);
+        }
+
+        static void StopUpnp()
+        {
+            if (Upnp != null) Upnp.Stop();
+            Upnp = null;
         }
 
         public static void Browse()
@@ -105,6 +114,7 @@ namespace CupheadLanCoop
             link = null;
             if (listener != null) listener.Stop();
             listener = null;
+            StopUpnp();
             if (discovery != null) discovery.Stop();
             discovery = null;
             welcomed = false;
@@ -548,6 +558,7 @@ namespace CupheadLanCoop
             link = null;
             if (listener != null) listener.Stop();
             listener = null;
+            StopUpnp();
             welcomed = false;
             State = CoopState.Idle;
             pendingStart = null;

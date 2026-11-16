@@ -44,6 +44,83 @@ namespace CupheadLanCoop
                 "플레이어 2를 기다리는 중...", "ОЖИДАНИЕ ИГРОКА 2...", "CZEKANIE NA GRACZA 2...", "AGUARDANDO O JOGADOR 2...", "プレイヤー2を待っています...", "等待玩家2...");
             Add("back_cancels", "(BACK = CANCEL)", "(RETOUR = ANNULER)", "(INDIETRO = ANNULLA)", "(ZURÜCK = ABBRECHEN)", "(VOLVER = CANCELAR)", "(VOLVER = CANCELAR)",
                 "(뒤로 = 취소)", "(НАЗАД = ОТМЕНА)", "(WSTECZ = ANULUJ)", "(VOLTAR = CANCELAR)", "(戻る = キャンセル)", "(返回 = 取消)");
+            Add("share_ip", "GIVE PLAYER 2 ONE OF THESE:", "DONNEZ AU JOUEUR 2 L'UNE DE CES ADRESSES :", "DAI AL GIOCATORE 2 UNO DI QUESTI:", "GIB SPIELER 2 EINE DAVON:",
+                "DALE AL JUGADOR 2 UNA DE ESTAS:", "DALE AL JUGADOR 2 UNA DE ESTAS:", "플레이어 2에게 다음 중 하나를 알려 주세요:", "СООБЩИТЕ ИГРОКУ 2 ОДИН ИЗ АДРЕСОВ:",
+                "PODAJ GRACZOWI 2 JEDEN Z NICH:", "PASSE AO JOGADOR 2 UM DESTES:", "プレイヤー2にどれかを伝えてください：", "把其中一个告诉玩家2：");
+            Add("internet", "INTERNET", "INTERNET", "INTERNET", "INTERNET", "INTERNET", "INTERNET", "인터넷", "ИНТЕРНЕТ", "INTERNET", "INTERNET", "インターネット", "互联网");
+            Add("lan", "SAME HOUSE (LAN)", "MÊME MAISON (LAN)", "STESSA CASA (LAN)", "GLEICHES HAUS (LAN)", "MISMA CASA (LAN)", "MISMA CASA (LAN)",
+                "같은 집 (LAN)", "ОДИН ДОМ (LAN)", "TEN SAM DOM (LAN)", "MESMA CASA (LAN)", "同じ家 (LAN)", "同一网络 (LAN)");
+            Add("port_open", "(PORT OPENED)", "(PORT OUVERT)", "(PORTA APERTA)", "(PORT GEÖFFNET)", "(PUERTO ABIERTO)", "(PUERTO ABIERTO)",
+                "(포트 열림)", "(ПОРТ ОТКРЫТ)", "(PORT OTWARTY)", "(PORTA ABERTA)", "(ポート開放済み)", "(端口已打开)");
+            Add("upnp_working", "OPENING THE PORT ON THE ROUTER...", "OUVERTURE DU PORT SUR LE ROUTEUR...", "APRO LA PORTA SUL ROUTER...", "ÖFFNE DEN PORT AM ROUTER...",
+                "ABRIENDO EL PUERTO EN EL ROUTER...", "ABRIENDO EL PUERTO EN EL ROUTER...", "공유기 포트를 여는 중...", "ОТКРЫВАЮ ПОРТ НА РОУТЕРЕ...",
+                "OTWIERAM PORT NA ROUTERZE...", "ABRINDO A PORTA NO ROTEADOR...", "ルーターのポートを開いています...", "正在路由器上打开端口...");
+            Add("ask_title", "PLAY OVER THE INTERNET?", "JOUER PAR INTERNET ?", "GIOCARE VIA INTERNET?", "ÜBER DAS INTERNET SPIELEN?", "¿JUGAR POR INTERNET?", "¿JUGAR POR INTERNET?",
+                "인터넷으로 플레이할까요?", "ИГРАТЬ ЧЕРЕЗ ИНТЕРНЕТ?", "GRAĆ PRZEZ INTERNET?", "JOGAR PELA INTERNET?", "インターネットで遊びますか？", "通过互联网游玩？");
+            Add("ask_body", "THE MOD OPENS A PORT ON YOUR ROUTER AND CLOSES IT WHEN YOU STOP. IF WINDOWS ASKS, PRESS ALLOW.",
+                "LE MOD OUVRE UN PORT SUR VOTRE ROUTEUR ET LE FERME QUAND VOUS ARRÊTEZ. SI WINDOWS DEMANDE, CLIQUEZ SUR AUTORISER.",
+                "LA MOD APRE UNA PORTA SUL ROUTER E LA RICHIUDE QUANDO SMETTI. SE WINDOWS LO CHIEDE, PREMI CONSENTI.",
+                "DIE MOD ÖFFNET EINEN PORT AM ROUTER UND SCHLIESST IHN DANACH WIEDER. WENN WINDOWS FRAGT, KLICKE AUF ZUGRIFF ZULASSEN.",
+                "EL MOD ABRE UN PUERTO EN TU ROUTER Y LO CIERRA AL TERMINAR. SI WINDOWS PREGUNTA, PULSA PERMITIR ACCESO.",
+                "EL MOD ABRE UN PUERTO EN TU ROUTER Y LO CIERRA AL TERMINAR. SI WINDOWS PREGUNTA, HAZ CLIC EN PERMITIR ACCESO.",
+                "모드가 공유기 포트를 열고 끝나면 다시 닫습니다. WINDOWS가 물으면 액세스 허용을 누르세요.",
+                "МОД ОТКРОЕТ ПОРТ НА РОУТЕРЕ И ЗАКРОЕТ ЕГО ПОСЛЕ ИГРЫ. ЕСЛИ WINDOWS СПРОСИТ, НАЖМИТЕ «РАЗРЕШИТЬ ДОСТУП».",
+                "MOD OTWIERA PORT NA ROUTERZE I ZAMYKA GO PO GRZE. JEŚLI WINDOWS ZAPYTA, KLIKNIJ ZEZWALAJ NA DOSTĘP.",
+                "O MOD ABRE UMA PORTA NO SEU ROTEADOR E A FECHA QUANDO VOCÊ PARAR. SE O WINDOWS PERGUNTAR, CLIQUE EM PERMITIR ACESSO.",
+                "MODがルーターのポートを開き、\n終わると閉じます。\nWINDOWSに聞かれたら\n「アクセスを許可する」を押してください。",
+                "模组会在路由器上打开端口，\n结束后自动关闭。\n如果WINDOWS询问，请点击“允许访问”。");
+            Add("ask_yes", "YES", "OUI", "SI", "JA", "SÍ", "SÍ", "예", "ДА", "TAK", "SIM", "はい", "是");
+            Add("ask_no", "NO (LAN / VPN ONLY)", "NON (LAN / VPN SEULEMENT)", "NO (SOLO LAN / VPN)", "NEIN (NUR LAN / VPN)", "NO (SOLO LAN / VPN)", "NO (SOLO LAN / VPN)",
+                "아니요 (LAN / VPN만)", "НЕТ (ТОЛЬКО LAN / VPN)", "NIE (TYLKO LAN / VPN)", "NÃO (SÓ LAN / VPN)", "いいえ（LAN / VPNのみ）", "否（仅LAN / VPN）");
+            Add("fail_title", "INTERNET NOT AVAILABLE", "INTERNET INDISPONIBLE", "INTERNET NON DISPONIBILE", "INTERNET NICHT VERFÜGBAR", "INTERNET NO DISPONIBLE", "INTERNET NO DISPONIBLE",
+                "인터넷 사용 불가", "ИНТЕРНЕТ НЕДОСТУПЕН", "INTERNET NIEDOSTĘPNY", "INTERNET INDISPONÍVEL", "インターネット接続不可", "互联网不可用");
+            Add("fail_router", "THE ROUTER DID NOT OPEN THE PORT. TURN ON UPNP IN THE ROUTER, OR BOTH OF YOU USE TAILSCALE.",
+                "LE ROUTEUR N'A PAS OUVERT LE PORT. ACTIVEZ L'UPNP SUR LE ROUTEUR, OU UTILISEZ TOUS LES DEUX TAILSCALE.",
+                "IL ROUTER NON HA APERTO LA PORTA. ATTIVA L'UPNP SUL ROUTER, OPPURE USATE ENTRAMBI TAILSCALE.",
+                "DER ROUTER HAT DEN PORT NICHT GEÖFFNET. AKTIVIERE UPNP AM ROUTER ODER NUTZT BEIDE TAILSCALE.",
+                "EL ROUTER NO ABRIÓ EL PUERTO. ACTIVA UPNP EN EL ROUTER O USAD LOS DOS TAILSCALE.",
+                "EL ROUTER NO ABRIÓ EL PUERTO. ACTIVA UPNP EN EL ROUTER O USEN LOS DOS TAILSCALE.",
+                "공유기가 포트를 열지 않았습니다. 공유기에서 UPNP를 켜거나 두 사람 모두 TAILSCALE을 사용하세요.",
+                "РОУТЕР НЕ ОТКРЫЛ ПОРТ. ВКЛЮЧИТЕ UPNP НА РОУТЕРЕ ИЛИ ИСПОЛЬЗУЙТЕ ОБА TAILSCALE.",
+                "ROUTER NIE OTWORZYŁ PORTU. WŁĄCZ UPNP NA ROUTERZE LUB UŻYJCIE OBAJ TAILSCALE.",
+                "O ROTEADOR NÃO ABRIU A PORTA. ATIVE O UPNP NO ROTEADOR OU USEM OS DOIS O TAILSCALE.",
+                "ルーターがポートを開きませんでした。\nルーターのUPNPを有効にするか、\n2人ともTAILSCALEを使ってください。",
+                "路由器没有打开端口。\n请在路由器上启用UPNP，\n或双方都使用TAILSCALE。");
+            Add("fail_cgnat", "YOUR PROVIDER BLOCKS INCOMING CONNECTIONS (CGNAT). BOTH OF YOU USE TAILSCALE.",
+                "VOTRE FAI BLOQUE LES CONNEXIONS ENTRANTES (CGNAT). UTILISEZ TOUS LES DEUX TAILSCALE.",
+                "IL TUO OPERATORE BLOCCA LE CONNESSIONI IN ENTRATA (CGNAT). USATE ENTRAMBI TAILSCALE.",
+                "DEIN ANBIETER BLOCKIERT EINGEHENDE VERBINDUNGEN (CGNAT). NUTZT BEIDE TAILSCALE.",
+                "TU OPERADOR BLOQUEA LAS CONEXIONES ENTRANTES (CGNAT). USAD LOS DOS TAILSCALE.",
+                "TU PROVEEDOR BLOQUEA LAS CONEXIONES ENTRANTES (CGNAT). USEN LOS DOS TAILSCALE.",
+                "통신사가 들어오는 연결을 막고 있습니다 (CGNAT). 두 사람 모두 TAILSCALE을 사용하세요.",
+                "ПРОВАЙДЕР БЛОКИРУЕТ ВХОДЯЩИЕ ПОДКЛЮЧЕНИЯ (CGNAT). ИСПОЛЬЗУЙТЕ ОБА TAILSCALE.",
+                "OPERATOR BLOKUJE POŁĄCZENIA PRZYCHODZĄCE (CGNAT). UŻYJCIE OBAJ TAILSCALE.",
+                "SEU PROVEDOR BLOQUEIA CONEXÕES DE ENTRADA (CGNAT). USEM OS DOIS O TAILSCALE.",
+                "プロバイダーが外部からの接続を\nブロックしています（CGNAT）。\n2人ともTAILSCALEを使ってください。",
+                "运营商阻止了传入连接（CGNAT）。\n请双方都使用TAILSCALE。");
+            Add("fail_double", "THE PROVIDER'S MODEM BLOCKS THE PORT. TURN ON UPNP IN THE MODEM, OR BOTH OF YOU USE TAILSCALE.",
+                "LA BOX DU FAI BLOQUE LE PORT. ACTIVEZ L'UPNP SUR LA BOX, OU UTILISEZ TOUS LES DEUX TAILSCALE.",
+                "IL MODEM DELL'OPERATORE BLOCCA LA PORTA. ATTIVA L'UPNP SUL MODEM, OPPURE USATE ENTRAMBI TAILSCALE.",
+                "DAS MODEM DES ANBIETERS BLOCKIERT DEN PORT. AKTIVIERE UPNP AM MODEM ODER NUTZT BEIDE TAILSCALE.",
+                "EL MÓDEM DEL OPERADOR BLOQUEA EL PUERTO. ACTIVA UPNP EN EL MÓDEM O USAD LOS DOS TAILSCALE.",
+                "EL MÓDEM DEL PROVEEDOR BLOQUEA EL PUERTO. ACTIVA UPNP EN EL MÓDEM O USEN LOS DOS TAILSCALE.",
+                "통신사 모뎀이 포트를 막고 있습니다. 모뎀에서 UPNP를 켜거나 두 사람 모두 TAILSCALE을 사용하세요.",
+                "МОДЕМ ПРОВАЙДЕРА БЛОКИРУЕТ ПОРТ. ВКЛЮЧИТЕ UPNP НА МОДЕМЕ ИЛИ ИСПОЛЬЗУЙТЕ ОБА TAILSCALE.",
+                "MODEM OPERATORA BLOKUJE PORT. WŁĄCZ UPNP NA MODEMIE LUB UŻYJCIE OBAJ TAILSCALE.",
+                "O MODEM DO PROVEDOR BLOQUEIA A PORTA. ATIVE O UPNP NO MODEM OU USEM OS DOIS O TAILSCALE.",
+                "プロバイダーのモデムが\nポートをブロックしています。\nモデムのUPNPを有効にするか、\n2人ともTAILSCALEを使ってください。",
+                "运营商光猫阻止了端口。\n请在光猫上启用UPNP，\n或双方都使用TAILSCALE。");
+            Add("ok", "OK", "OK", "OK", "OK", "ACEPTAR", "ACEPTAR", "확인", "ОК", "OK", "OK", "OK", "确定");
+            Add("on", "ON", "OUI", "SI", "AN", "SÍ", "SÍ", "켜짐", "ВКЛ", "WŁ.", "SIM", "オン", "开");
+            Add("off", "OFF", "NON", "NO", "AUS", "NO", "NO", "꺼짐", "ВЫКЛ", "WYŁ.", "NÃO", "オフ", "关");
+            Add("net_off", "NOT AVAILABLE", "INDISPONIBLE", "NON DISPONIBILE", "NICHT VERFÜGBAR", "NO DISPONIBLE", "NO DISPONIBLE",
+                "사용 불가", "НЕДОСТУПЕН", "NIEDOSTĘPNY", "INDISPONÍVEL", "利用不可", "不可用");
+            Add("join_hint", "CHECK THE IP. IF IT STILL FAILS, BOTH OF YOU USE TAILSCALE.", "VÉRIFIEZ L'IP. SI ÇA NE MARCHE TOUJOURS PAS, UTILISEZ TOUS LES DEUX TAILSCALE.",
+                "CONTROLLA L'IP. SE ANCORA NON VA, USATE ENTRAMBI TAILSCALE.", "PRÜFE DIE IP. KLAPPT ES IMMER NOCH NICHT, NUTZT BEIDE TAILSCALE.",
+                "REVISA LA IP. SI SIGUE SIN FUNCIONAR, USAD LOS DOS TAILSCALE.", "REVISA LA IP. SI SIGUE SIN FUNCIONAR, USEN LOS DOS TAILSCALE.",
+                "IP를 확인하세요. 그래도 안 되면 두 사람 모두 TAILSCALE을 사용하세요.", "ПРОВЕРЬТЕ IP. ЕСЛИ НЕ ПОМОГЛО, ИСПОЛЬЗУЙТЕ ОБА TAILSCALE.",
+                "SPRAWDŹ IP. JEŚLI DALEJ NIE DZIAŁA, UŻYJCIE OBAJ TAILSCALE.", "CONFIRA O IP. SE AINDA NÃO FUNCIONAR, USEM OS DOIS O TAILSCALE.",
+                "IPを確認してください。\nそれでもだめなら、\n2人ともTAILSCALEを使ってください。", "请检查IP。\n如果仍然不行，\n请双方都使用TAILSCALE。");
             Add("searching", "SEARCHING FOR GAMES...", "RECHERCHE DE PARTIES...", "RICERCA PARTITE...", "SUCHE NACH SPIELEN...", "BUSCANDO PARTIDAS...", "BUSCANDO PARTIDAS...",
                 "게임 검색 중...", "ПОИСК ИГР...", "SZUKANIE GIER...", "PROCURANDO PARTIDAS...", "ゲームを検索中...", "正在搜索游戏...");
             Add("version", "(VERSION {0})", "(VERSION {0})", "(VERSIONE {0})", "(VERSION {0})", "(VERSIÓN {0})", "(VERSIÓN {0})",
@@ -109,6 +186,16 @@ namespace CupheadLanCoop
                 "Różne instalacje (wymagana ta sama wersja gry, DLC i mody): {0}", "Instalações diferentes (mesma versão do jogo, DLC e mods necessários): {0}",
                 "インストール内容が違います（同じゲームバージョン・DLC・MODが必要）：{0}", "安装不一致（需要相同的游戏版本、DLC和模组）：{0}");
         }
+
+        // Test only: every text of one language column (to check the game fonts have all glyphs).
+        public static List<string> Column(int lang)
+        {
+            List<string> r = new List<string>();
+            foreach (string[] v in T.Values) if (lang < v.Length && v[lang] != null) r.Add(v[lang]);
+            return r;
+        }
+
+        public static string Code(int lang) { return lang >= 0 && lang < Codes.Length ? Codes[lang] : "?"; }
 
         static int Index()
         {

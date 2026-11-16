@@ -8,7 +8,9 @@ UNINSTALL: run the installer again and press Uninstall.
 
 Both players need the same mod version and the same game version / DLC.
 Main menu -> ONLINE CO-OP. Host: HOST GAME. Friend: JOIN GAME -> pick the game or ENTER IP.
-Over the internet use a virtual LAN (Radmin VPN, Tailscale, ZeroTier) or open TCP port 28147 on the host's router.
+Over the internet: when you host, the mod opens the port on your router by itself (UPnP) and shows
+"INTERNET: <your IP>" - give that IP to your friend. If it says the port could not be opened, turn on
+UPnP in the router, or use a virtual LAN (Radmin VPN, Tailscale, ZeroTier) and give the IP shown next to it.
 
 Full guide, source code and support: https://github.com/Xillo23/CupheadOnlineCoop
 Enjoying it? The mod is free - a small tip on Ko-fi keeps updates coming: https://ko-fi.com/xillo23

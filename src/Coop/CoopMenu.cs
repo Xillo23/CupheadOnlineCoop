@@ -34,7 +34,8 @@ namespace CupheadLanCoop
         static int selected;
         static string ip = "";
         static bool editIp;
-        const string IpChars = "0123456789.";
+        const string IpChars = "0123456789.:";
+        const int IpMax = 21; // 255.255.255.255:65535
 
         public static void Install(Harmony h, List<string> missing)
         {
@@ -54,6 +55,14 @@ namespace CupheadLanCoop
             h.Patch(awake, null, new HarmonyMethod(typeof(CoopMenu).GetMethod("AfterAwake", BindingFlags.Static | BindingFlags.NonPublic)), null, null, null);
             h.Patch(update, new HarmonyMethod(typeof(CoopMenu).GetMethod("BeforeMainMenu", BindingFlags.Static | BindingFlags.NonPublic)), null, null, null, null);
             h.Patch(setState, null, new HarmonyMethod(typeof(CoopMenu).GetMethod("AfterState", BindingFlags.Static | BindingFlags.NonPublic)), null, null, null);
+            confirmChildField = t.GetField("confirmDeleteChild", Inst);
+            popSelColorField = t.GetField("confirmDeleteSelectedColor", Inst); popUnselColorField = t.GetField("confirmDeleteUnselectedColor", Inst);
+            HarmonyMethod block = new HarmonyMethod(typeof(CoopMenu).GetMethod("BeforeOtherPage", BindingFlags.Static | BindingFlags.NonPublic));
+            foreach (string name in new string[] { "UpdateSlotSelect", "UpdatePlayerSelect", "UpdateConfirmDelete" })
+            {
+                MethodInfo m = t.GetMethod(name, Inst);
+                if (m != null) h.Patch(m, block, null, null, null, null);
+            }
             try { ip = File.ReadAllText(LastIpPath()).Trim(); } catch { ip = ""; }
         }
 
@@ -75,8 +84,35 @@ namespace CupheadLanCoop
                 lanItem.gameObject.SetActive(true);
                 Place(lanItem, 1);
                 lanItem.color = (Color)unselColorField.GetValue(__instance);
+                if (CoopPlugin.DumpUi)
+                {
+                    FieldInfo cd = typeof(SlotSelectScreen).GetField("confirmDeleteChild", Inst);
+                    if (cd != null) DumpTree(((RectTransform)cd.GetValue(__instance)).transform, 0);
+                }
             }
             catch (Exception ex) { CoopPlugin.Log("Menu LAN non creato: " + ex); lanItem = null; }
+        }
+
+        // Test only: logs a UI subtree (names, components, texts, sizes) to design native-looking pages.
+        static void DumpTree(Transform t, int depth)
+        {
+            string info = new string(' ', depth * 2) + t.name + " active=" + t.gameObject.activeSelf;
+            RectTransform r = t as RectTransform;
+            if (r != null) info += " pos=" + r.anchoredPosition + " size=" + r.rect.size + " anchors=" + r.anchorMin + r.anchorMax;
+            foreach (Component c in t.GetComponents<Component>())
+            {
+                if (c == null || c is Transform) continue;
+                info += " [" + c.GetType().Name;
+                Text tx = c as Text;
+                if (tx != null) info += " '" + tx.text + "' size=" + tx.fontSize + " font=" + (tx.font != null ? tx.font.name : "-");
+                Image im = c as Image;
+                if (im != null) info += " sprite=" + (im.sprite != null ? im.sprite.name : "-");
+                PropertyInfo text = c.GetType().GetProperty("text");
+                if (tx == null && text != null && text.PropertyType == typeof(string)) { try { info += " '" + text.GetValue(c, null) + "'"; } catch { } }
+                info += "]";
+            }
+            CoopPlugin.Log("UI " + info);
+            for (int i = 0; i < t.childCount; i++) DumpTree(t.GetChild(i), depth + 1);
         }
 
         static Text Clone(string text, bool small)
@@ -133,6 +169,7 @@ namespace CupheadLanCoop
                 if (lanItem.text != label) lanItem.text = label;
                 if (lanItem.font != template.font) lanItem.font = template.font;
                 if ((float)timeField.GetValue(__instance) < 0.75f) return true;
+                if (PopupOpen) { UpdatePopup(); return false; }
                 if (page != Page.None) { UpdateSubmenu(); return false; }
                 Text[] native = Native();
                 Color sel = (Color)selColorField.GetValue(__instance), unsel = (Color)unselColorField.GetValue(__instance);
@@ -195,6 +232,27 @@ namespace CupheadLanCoop
             if (step == 4) { Session.CancelHostWait(); return; }
             if (step == 5) { Session.Browse(); Open(Page.Join); return; }
             if (step == 6) { Open(Page.Ip); return; }
+            if (step == 7) { CheckGlyphs(); StartHost(); return; } // the real path: first-time question
+            if (step == 8) { Action yes = popActs != null && popActs.Length > 0 ? popActs[0] : null; HidePopup(); if (yes != null) yes(); return; } // as if YES was pressed
+            if (step == 9) { Session.Upnp = PortOpener.FakedFailure(); return; } // router refuses: popup over the save screen
+        }
+
+        // Test only: logs characters of mod texts that the current game font cannot draw.
+        static void CheckGlyphs()
+        {
+            int current;
+            try { current = (int)Localization.language; } catch { current = 0; }
+            bool cjk = current == 6 || current == 10 || current == 11;
+            for (int lang = 0; lang < 12; lang++)
+            {
+                bool langCjk = lang == 6 || lang == 10 || lang == 11;
+                if (langCjk != cjk || (cjk && lang != current)) continue; // the font changes with CJK languages
+                string missing = "";
+                foreach (string text in L.Column(lang))
+                    foreach (char c in text)
+                        if (c != ' ' && !template.font.HasCharacter(c) && missing.IndexOf(c) < 0) missing += c;
+                CoopPlugin.Log("GLIFI " + L.Code(lang) + " font=" + template.font.name + " mancanti: [" + missing + "]");
+            }
         }
 
         // Host chose the slot before player 2 arrived: native-styled waiting text over the slot screen.
@@ -203,7 +261,9 @@ namespace CupheadLanCoop
         public static void Tick()
         {
             if (screen == null || template == null) return;
-            bool show = Session.HostWaiting;
+            CheckUpnpFailure();
+            bool onSlots = stateField.GetValue(screen).ToString() != "MainMenu";
+            bool show = Session.HostWaiting || (Session.State == CoopState.Hosting && onSlots);
             if (!show) { if (waiting != null && waiting.gameObject.activeSelf) waiting.gameObject.SetActive(false); return; }
             if (waiting == null)
             {
@@ -219,18 +279,170 @@ namespace CupheadLanCoop
             }
             waiting.gameObject.SetActive(true);
             waiting.transform.SetAsLastSibling();
-            string text = L.Tr("waiting") + "   " + L.Tr("back_cancels") + "\n";
-            List<LocalAddress> addresses = LocalAddress.List();
-            for (int i = 0; i < addresses.Count && i < 3; i++) text += (i > 0 ? "     " : "") + "IP " + addresses[i].Label;
+            string text = L.Tr("waiting") + (Session.HostWaiting ? "   " + L.Tr("back_cancels") : "") + "\n" + string.Join("     ", AddressLines(true).ToArray());
             if (waiting.text != text) waiting.text = text;
-            if (Press(CupheadButton.Cancel)) { Sound(true); Session.CancelHostWait(); }
+            if (Session.HostWaiting && !PopupOpen && Press(CupheadButton.Cancel)) { Sound(true); Session.CancelHostWait(); }
         }
 
         // Session started: nothing of ours may stay on screen.
         public static void CloseAll()
         {
-            try { CloseSubmenu(); if (lanItem != null) lanItem.gameObject.SetActive(false); if (waiting != null) waiting.gameObject.SetActive(false); }
+            try { HidePopup(); CloseSubmenu(); if (lanItem != null) lanItem.gameObject.SetActive(false); if (waiting != null) waiting.gameObject.SetActive(false); }
             catch (Exception) { }
+        }
+
+        // ---------- popup (a clone of the game's own "delete save?" card) ----------
+
+        static FieldInfo confirmChildField, popSelColorField, popUnselColorField;
+        static GameObject popup;
+        static Text popTitle, popBody;
+        static readonly Text[] popOpts = new Text[2];
+        static Action[] popActs;
+        static Action popBack;
+        static int popSel, popCount, popFrame;
+        static PortOpener failShownFor;
+
+        public static bool PopupOpen { get { return popup != null && popup.activeSelf; } }
+
+        static bool EnsurePopup()
+        {
+            if (popup != null) return true;
+            if (confirmChildField == null || screen == null || template == null) return false;
+            try
+            {
+                RectTransform src = (RectTransform)confirmChildField.GetValue(screen);
+                Transform card0 = src.Find("Card");
+                if (card0 == null || card0.Find("ConfirmText") == null || card0.Find("Yes") == null || card0.Find("No") == null) return false;
+                GameObject go = UnityEngine.Object.Instantiate<GameObject>(src.gameObject);
+                go.name = "CupheadLanCoop Popup";
+                go.transform.SetParent(src.parent, false);
+                foreach (Component c in go.GetComponentsInChildren<Component>(true))
+                {
+                    if (c == null) continue;
+                    string n = c.GetType().Name;
+                    if (n == "LocalizationHelper" || n == "UITextAnimator" || n == "CustomLanguageFont") UnityEngine.Object.DestroyImmediate(c);
+                }
+                Transform card = go.transform.Find("Card");
+                Transform slot = card.Find("SlotText");
+                if (slot != null) slot.gameObject.SetActive(false);
+                popTitle = card.Find("ConfirmText").GetComponent<Text>();
+                popBody = UnityEngine.Object.Instantiate<Text>(popTitle);
+                popBody.name = "Body";
+                popBody.transform.SetParent(card, false);
+                popOpts[0] = card.Find("Yes").GetComponent<Text>();
+                popOpts[1] = card.Find("No").GetComponent<Text>();
+                Fit(popTitle, -42f, 44f, 30, 16);
+                Fit(popBody, -104f, 78f, 21, 11);
+                go.SetActive(false);
+                popup = go;
+                return true;
+            }
+            catch (Exception ex) { CoopPlugin.Log("Popup non creato: " + ex); popup = null; return false; }
+        }
+
+        static void Fit(Text t, float y, float height, int max, int min)
+        {
+            RectTransform r = t.rectTransform;
+            r.anchoredPosition = new Vector2(226.5f, y);
+            r.sizeDelta = new Vector2(405f, height);
+            t.alignment = TextAnchor.MiddleCenter;
+            t.horizontalOverflow = HorizontalWrapMode.Wrap;
+            t.verticalOverflow = VerticalWrapMode.Truncate;
+            t.resizeTextForBestFit = true;
+            t.resizeTextMaxSize = max;
+            t.resizeTextMinSize = min;
+        }
+
+        // options/actions: one or two buttons. back = Cancel button (null = same as closing).
+        static bool ShowPopup(string title, string body, string[] options, Action[] actions, Action back)
+        {
+            if (!EnsurePopup()) return false;
+            popTitle.text = title;
+            popBody.text = body;
+            popCount = Math.Min(2, options.Length);
+            for (int i = 0; i < 2; i++)
+            {
+                popOpts[i].gameObject.SetActive(i < popCount);
+                if (i >= popCount) continue;
+                popOpts[i].text = options[i];
+                Fit(popOpts[i], popCount == 1 ? -198f : -177f - 38f * i, 34f, 30, 14);
+            }
+            popActs = actions; popBack = back; popSel = 0; popFrame = Time.frameCount;
+            popup.transform.SetAsLastSibling();
+            popup.SetActive(true);
+            RenderPopup();
+            return true;
+        }
+
+        static void HidePopup() { if (popup != null) popup.SetActive(false); }
+
+        static void UpdatePopup()
+        {
+            if (Time.frameCount != popFrame)
+            {
+                if (popCount > 1 && (Press(CupheadButton.MenuUp) || Press(CupheadButton.MenuDown))) { Sound(false); popSel = 1 - popSel; }
+                else if (Press(CupheadButton.Accept))
+                {
+                    Sound(true);
+                    Action a = popActs != null && popSel < popActs.Length ? popActs[popSel] : null;
+                    HidePopup();
+                    if (a != null) a();
+                    return;
+                }
+                else if (Press(CupheadButton.Cancel))
+                {
+                    Sound(true);
+                    Action b = popBack;
+                    HidePopup();
+                    if (b != null) b();
+                    return;
+                }
+            }
+            RenderPopup();
+        }
+
+        static void RenderPopup()
+        {
+            Color sel = popSelColorField != null ? (Color)popSelColorField.GetValue(screen) : (Color)selColorField.GetValue(screen);
+            Color unsel = popUnselColorField != null ? (Color)popUnselColorField.GetValue(screen) : (Color)unselColorField.GetValue(screen);
+            Font font = template.font; // follows the game language (CJK fonts included)
+            foreach (Text t in new Text[] { popTitle, popBody, popOpts[0], popOpts[1] }) if (t.font != font) t.font = font;
+            for (int i = 0; i < popCount; i++) popOpts[i].color = i == popSel ? sel : unsel;
+        }
+
+        // Slot select / player select / confirm delete: frozen while our popup is open.
+        static bool BeforeOtherPage(SlotSelectScreen __instance)
+        {
+            if (__instance != screen || !PopupOpen) return true;
+            try { UpdatePopup(); } catch (Exception ex) { CoopPlugin.Log("Errore popup: " + ex); HidePopup(); }
+            return false;
+        }
+
+        // CREA PARTITA: the first time, ask about the router port.
+        static void StartHost()
+        {
+            if (CoopPlugin.UpnpChoice == "ask" &&
+                ShowPopup(L.Tr("ask_title"), L.Tr("ask_body"), new string[] { L.Tr("ask_yes"), L.Tr("ask_no") },
+                    new Action[] { delegate { CoopPlugin.SetUpnp(true); DoHost(); }, delegate { CoopPlugin.SetUpnp(false); DoHost(); } }, null))
+                return;
+            DoHost();
+        }
+
+        static void DoHost()
+        {
+            Session.Host();
+            if (Session.State == CoopState.Hosting) ChooseSave();
+        }
+
+        // The router could not be opened: say it once, briefly, with the fix.
+        static void CheckUpnpFailure()
+        {
+            PortOpener u = Session.Upnp;
+            if (u == null || u == failShownFor || PopupOpen || Session.State != CoopState.Hosting) return;
+            string key = u.State == PortState.Cgnat ? "fail_cgnat" : u.State == PortState.DoubleNat ? "fail_double" : u.State == PortState.Failed ? "fail_router" : null;
+            if (key == null) return;
+            failShownFor = u;
+            ShowPopup(L.Tr("fail_title"), L.Tr(key), new string[] { L.Tr("ok") }, new Action[] { null }, null);
         }
 
         static List<Entry> Build(out Action back)
@@ -240,8 +452,13 @@ namespace CupheadLanCoop
             switch (page)
             {
                 case Page.Root:
-                    e.Add(new Entry(L.Tr("host"), delegate { Session.Host(); if (Session.State == CoopState.Hosting) ChooseSave(); }, false));
+                    e.Add(new Entry(L.Tr("host"), StartHost, false));
                     e.Add(new Entry(L.Tr("join"), delegate { Session.Browse(); Open(Page.Join); }, false));
+                    if (CoopPlugin.UpnpChoice != "ask" && !CoopPlugin.DumpUi)
+                    {
+                        bool on = CoopPlugin.UpnpChoice == "yes";
+                        e.Add(new Entry(L.Tr("internet") + ": " + L.Tr(on ? "on" : "off"), delegate { CoopPlugin.SetUpnp(!on); }, false));
+                    }
                     e.Add(new Entry(L.Tr("back"), delegate { Session.Cancel(); CloseSubmenu(); }, false));
                     AddError(e);
                     back = delegate { Session.Cancel(); CloseSubmenu(); };
@@ -256,8 +473,9 @@ namespace CupheadLanCoop
                     else if (Session.State == CoopState.Hosting)
                     {
                         e.Add(new Entry(L.Tr("waiting"), null, true));
-                        List<LocalAddress> addresses = LocalAddress.List();
-                        for (int i = 0; i < addresses.Count && i < 3; i++) e.Add(new Entry("IP " + addresses[i].Label, null, true));
+                        List<string> addresses = AddressLines(false);
+                        if (addresses.Count > 0) e.Add(new Entry(L.Tr("share_ip"), null, true));
+                        foreach (string a in addresses) AddWrapped(e, a);
                     }
                     AddError(e);
                     e.Add(new Entry(L.Tr("cancel"), back, false));
@@ -292,6 +510,7 @@ namespace CupheadLanCoop
                         e.Add(new Entry(L.Tr("host_choosing"), null, true));
                     }
                     AddError(e);
+                    if (Session.State == CoopState.Idle && !string.IsNullOrEmpty(Session.Error)) AddWrapped(e, L.Tr("join_hint"));
                     e.Add(new Entry(Session.State == CoopState.Idle ? L.Tr("back") : L.Tr("leave"), delegate { Session.Cancel(); Session.Browse(); Open(Page.Join); }, false));
                     back = delegate { Session.Cancel(); Session.Browse(); Open(Page.Join); };
                     break;
@@ -302,22 +521,76 @@ namespace CupheadLanCoop
         static void AddError(List<Entry> e)
         {
             string error = L.Show(Session.Error);
-            if (string.IsNullOrEmpty(error)) return;
-            error = error.ToUpper();
-            while (error.Length > 0)
+            if (!string.IsNullOrEmpty(error)) AddWrapped(e, error.ToUpper());
+        }
+
+        // Splits on explicit line breaks, then at about 48 columns (CJK characters count double).
+        static void AddWrapped(List<Entry> e, string text)
+        {
+            foreach (string part in text.Split('\n'))
             {
-                int n = Math.Min(48, error.Length);
-                if (n < error.Length) { int sp = error.LastIndexOf(' ', n); if (sp > 20) n = sp; }
-                e.Add(new Entry(error.Substring(0, n).Trim(), null, true));
-                error = error.Substring(n);
+                string rest = part.Trim();
+                while (rest.Length > 0)
+                {
+                    int n = 0, width = 0;
+                    while (n < rest.Length && width + Columns(rest[n]) <= 48) { width += Columns(rest[n]); n++; }
+                    if (n < rest.Length) { int sp = rest.LastIndexOf(' ', n); if (sp > n / 2) n = sp; }
+                    if (n <= 0) n = 1;
+                    e.Add(new Entry(rest.Substring(0, n).Trim(), null, true));
+                    rest = rest.Substring(n).Trim();
+                }
             }
+        }
+
+        static int Columns(char c) { return c >= 0x1100 && !(c >= 0xFF61 && c <= 0xFFDC) ? 2 : 1; }
+
+        // What the host tells player 2: internet address (UPnP), home LAN, then only the VPNs really installed and up.
+        // compact = one-line overlay over the save screen (short labels, no explanations).
+        static List<string> AddressLines(bool compact)
+        {
+            List<string> result = new List<string>();
+            string problem = null;
+            PortOpener upnp = Session.Upnp;
+            if (upnp != null)
+            {
+                string internet = L.Tr("internet") + (compact ? " " : ": ");
+                if (upnp.State == PortState.Open)
+                {
+                    string where = upnp.PublicIp.Length == 0 ? "" : upnp.PublicIp + (upnp.PublicPort != CoopPlugin.Port ? ":" + upnp.PublicPort : "");
+                    result.Add(internet + (where.Length == 0 ? L.Tr("port_open") : where + (compact ? "" : " " + L.Tr("port_open"))));
+                }
+                else if (upnp.State == PortState.Working) result.Add(internet + L.Tr("upnp_working"));
+                else if (!compact) problem = internet + L.Tr("net_off");
+            }
+            foreach (NetAddress a in NetAddresses.List())
+            {
+                string label;
+                switch (a.Kind)
+                {
+                    case NetKind.Lan: label = compact ? "LAN" : L.Tr("lan"); break;
+                    case NetKind.Radmin: label = "RADMIN"; break;
+                    case NetKind.Tailscale: label = "TAILSCALE"; break;
+                    case NetKind.ZeroTier: label = "ZEROTIER"; break;
+                    default: label = "HAMACHI"; break;
+                }
+                result.Add(label + (compact ? " " : ": ") + a.Address);
+            }
+            if (problem != null) result.Add(problem); // usable addresses first, the explanation last
+            return result;
         }
 
         static void Connect()
         {
             if (ip.Length == 0) return;
             try { File.WriteAllText(LastIpPath(), ip); } catch { }
-            Session.Join(ip, CoopPlugin.Port);
+            string host = ip;
+            int port = CoopPlugin.Port, colon = ip.IndexOf(':');
+            if (colon >= 0)
+            {
+                host = ip.Substring(0, colon);
+                if (!int.TryParse(ip.Substring(colon + 1), out port) || port <= 0 || port > 65535) port = CoopPlugin.Port;
+            }
+            Session.Join(host, port);
             Open(Page.Guest);
         }
 
@@ -347,7 +620,7 @@ namespace CupheadLanCoop
             {
                 if (Press(CupheadButton.MenuUp)) Cycle(1);
                 else if (Press(CupheadButton.MenuDown)) Cycle(-1);
-                else if (Press(CupheadButton.MenuRight)) { if (ip.Length < 15) ip += "0"; }
+                else if (Press(CupheadButton.MenuRight)) { if (ip.Length < IpMax) ip += "0"; }
                 else if (Press(CupheadButton.MenuLeft)) { if (ip.Length > 0) ip = ip.Substring(0, ip.Length - 1); }
                 else if (Press(CupheadButton.Accept) || Press(CupheadButton.Cancel)) { Sound(true); editIp = false; }
             }
@@ -365,7 +638,7 @@ namespace CupheadLanCoop
             {
                 if (c == '\b') { if (ip.Length > 0) ip = ip.Substring(0, ip.Length - 1); }
                 else if (c == '\n' || c == '\r') { Connect(); return; }
-                else if (IpChars.IndexOf(c) >= 0 && ip.Length < 15) ip += c;
+                else if (IpChars.IndexOf(c) >= 0 && ip.Length < IpMax) ip += c;
             }
         }
 

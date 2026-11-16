@@ -13,10 +13,35 @@ namespace CupheadLanCoop
     [BepInPlugin("it.cupheadlan.coop", "Cuphead LAN Co-op (lockstep)", Version)]
     public sealed class CoopPlugin : BaseUnityPlugin
     {
-        public const string Version = "0.2.0";
+        public const string Version = "0.2.1";
         public static int Port = 28147, DiscoveryPort = 28148, InputDelay;
         public static string PlayerName = "Giocatore";
-        public static bool TestNoSave;
+        public static bool TestNoSave, DumpUi;
+        static ConfigEntry<string> upnpEntry;
+        static ConfigFile config;
+
+        // ask (first time), yes, no.
+        public static string UpnpChoice
+        {
+            get
+            {
+                string v = upnpEntry == null ? "ask" : (upnpEntry.Value ?? "").Trim().ToLowerInvariant();
+                if (v == "yes" || v == "true" || v == "on") return "yes";
+                if (v == "no" || v == "false" || v == "off") return "no";
+                return "ask";
+            }
+        }
+
+        public static bool UseUpnp { get { return !autoPair && UpnpChoice != "no"; } }
+
+        public static void SetUpnp(bool on)
+        {
+            if (upnpEntry == null) return;
+            upnpEntry.Value = on ? "yes" : "no";
+            try { config.Save(); } catch (Exception ex) { Log("Config non salvata: " + ex.Message); }
+            Log("UPnP: scelta " + upnpEntry.Value);
+        }
+        public static string FakePublicIp; // screenshots only
         public static string TestLevel = "";
         static string bot = "off";
         static bool autoPair;
@@ -34,6 +59,8 @@ namespace CupheadLanCoop
             Config.SaveOnConfigSet = false; // two instances may start together: never rewrite while binding
             Port = Config.Bind("Network", "TcpPort", 28147, "TCP port of the game (same on both PCs).").Value;
             DiscoveryPort = Config.Bind("Network", "DiscoveryPort", 28148, "UDP port used to find games on the local network / VPN.").Value;
+            config = Config;
+            upnpEntry = Config.Bind("Network", "UPnP", "ask", "Host: open the router port automatically so friends can join over the internet. ask = ask the first time | yes | no.");
             InputDelay = Config.Bind("Network", "InputDelay", 0, "Input delay in frames. 0 = automatic from ping (2..8).").Value;
             string name = Config.Bind("General", "PlayerName", "", "Name shown to your partner. Empty = computer name.").Value;
             PlayerName = string.IsNullOrEmpty(name) ? Environment.MachineName : name;
@@ -46,17 +73,13 @@ namespace CupheadLanCoop
             TestLevel = Config.Bind("Test", "AutoLevel", "", "Testing only: the host starts this level directly (e.g. Veggies) instead of the map.").Value.Trim();
             TestNoSave = Config.Bind("Test", "NoSave", false, "Testing only: the host does not write saves/settings either.").Value;
             RandomTrace.Enabled = Config.Bind("Diagnostics", "TraceRandom", false, "Desync check every frame plus a trace of Random calls (slow at startup).").Value;
+            DumpUi = showMenu;
             if (showMenu)
             {
-                LocalAddress.Fake = new List<LocalAddress>();
-                foreach (string s in new string[] { "RADMIN 26.12.34.56", "192.168.1.20" })
-                {
-                    LocalAddress a = new LocalAddress();
-                    a.Label = s;
-                    a.Address = System.Net.IPAddress.Parse(s.Substring(s.LastIndexOf(' ') + 1));
-                    a.Broadcast = System.Net.IPAddress.Loopback;
-                    LocalAddress.Fake.Add(a);
-                }
+                NetAddresses.Fake = new List<NetAddress>();
+                NetAddresses.Fake.Add(new NetAddress(NetKind.Lan, System.Net.IPAddress.Parse("192.168.1.20"), true));
+                NetAddresses.Fake.Add(new NetAddress(NetKind.Radmin, System.Net.IPAddress.Parse("26.12.34.56"), false));
+                FakePublicIp = "203.0.113.7";
                 PlayerName = "PLAYER";
             }
             if (!File.Exists(Config.ConfigFilePath)) Config.Save();
@@ -163,6 +186,7 @@ namespace CupheadLanCoop
         {
             if (Session.InGame) Session.End(L.M("partner_quit"));
             else Session.Cancel();
+            PortOpener.Shutdown(2000); // close the router port before the process exits
         }
 
         static void ShowMenuTick()
@@ -188,7 +212,7 @@ namespace CupheadLanCoop
             if (menuSeenAt < 0 && typeof(SlotSelectScreen).GetField("state", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(screen).ToString() != "MainMenu") return;
             if (menuSeenAt < 0) { menuSeenAt = Time.realtimeSinceStartup; Log("MostraMenuLan: menu principale visibile"); }
             float t = Time.realtimeSinceStartup - menuSeenAt;
-            if (menuStep <= 7 && t > 8f + menuStep * 5f) CoopMenu.TestStep(menuStep++);
+            if (menuStep <= 9 && t > 8f + menuStep * 5f) CoopMenu.TestStep(menuStep++);
         }
 
         // Two instances on one PC (test): first binds the port and hosts, second joins 127.0.0.1.
