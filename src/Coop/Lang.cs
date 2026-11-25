@@ -187,6 +187,31 @@ namespace CupheadLanCoop
                 "설치가 다릅니다 (같은 게임 버전, DLC, 모드 필요): {0}", "Разные установки (нужны одинаковые версия игры, DLC и моды): {0}",
                 "Różne instalacje (wymagana ta sama wersja gry, DLC i mody): {0}", "Instalações diferentes (mesma versão do jogo, DLC e mods necessários): {0}",
                 "インストール内容が違います（同じゲームバージョン・DLC・MODが必要）：{0}", "安装不一致（需要相同的游戏版本、DLC和模组）：{0}");
+            Add("copy_ip", "COPY IP", "COPIER L'IP", "COPIA IP", "IP KOPIEREN", "COPIAR IP", "COPIAR IP",
+                "IP 복사", "КОПИРОВАТЬ IP", "KOPIUJ IP", "COPIAR IP", "IPをコピー", "复制IP");
+            Add("copy_ip_hint", "(C = COPY IP)", "(C = COPIER IP)", "(C = COPIA IP)", "(C = IP KOPIEREN)", "(C = COPIAR IP)", "(C = COPIAR IP)",
+                "(C = IP 복사)", "(C = КОПИРОВАТЬ IP)", "(C = KOPIUJ IP)", "(C = COPIAR IP)", "(C = IPをコピー)", "(C = 复制IP)");
+            Add("ip_copied", "IP COPIED: {0}", "IP COPIÉE : {0}", "IP COPIATO: {0}", "IP KOPIERT: {0}", "IP COPIADA: {0}", "IP COPIADA: {0}",
+                "IP 복사됨: {0}", "IP СКОПИРОВАН: {0}", "SKOPIOWANO IP: {0}", "IP COPIADO: {0}", "IPをコピーしました：{0}", "已复制IP：{0}");
+            Add("paste_ip", "PASTE IP (CTRL+V)", "COLLER L'IP (CTRL+V)", "INCOLLA IP (CTRL+V)", "IP EINFÜGEN (STRG+V)", "PEGAR IP (CTRL+V)", "PEGAR IP (CTRL+V)",
+                "IP 붙여넣기 (CTRL+V)", "ВСТАВИТЬ IP (CTRL+V)", "WKLEJ IP (CTRL+V)", "COLAR IP (CTRL+V)", "IPを貼り付け (CTRL+V)", "粘贴IP (CTRL+V)");
+            Add("guest_title", "PLAYER WANTS TO JOIN", "UN JOUEUR VEUT REJOINDRE", "UN GIOCATORE VUOLE ENTRARE", "SPIELER MÖCHTE BEITRETEN", "UN JUGADOR QUIERE UNIRSE", "UN JUGADOR QUIERE UNIRSE",
+                "플레이어 참가 요청", "ИГРОК ХОЧЕТ ПРИСОЕДИНИТЬСЯ", "GRACZ CHCE DOŁĄCZYĆ", "JOGADOR QUER ENTRAR", "参加リクエスト", "玩家请求加入");
+            Add("guest_body", "{0} WANTS TO JOIN YOUR GAME.", "{0} VEUT REJOINDRE VOTRE PARTIE.", "{0} VUOLE ENTRARE NELLA TUA PARTITA.", "{0} MÖCHTE DEINEM SPIEL BEITRETEN.",
+                "{0} QUIERE UNIRSE A TU PARTIDA.", "{0} QUIERE UNIRSE A TU PARTIDA.", "{0}님이 게임에 참가하려고 합니다.", "{0} ХОЧЕТ ПРИСОЕДИНИТЬСЯ К ИГРЕ.",
+                "{0} CHCE DOŁĄCZYĆ DO TWOJEJ GRY.", "{0} QUER ENTRAR NA SUA PARTIDA.", "{0}がゲームへの参加を\nリクエストしています。", "{0}请求加入你的游戏。");
+            Add("guest_accept", "ACCEPT", "ACCEPTER", "ACCETTA", "ANNEHMEN", "ACEPTAR", "ACEPTAR",
+                "수락", "ПРИНЯТЬ", "AKCEPTUJ", "ACEITAR", "承認", "接受");
+            Add("guest_decline", "DECLINE", "REFUSER", "RIFIUTA", "ABLEHNEN", "RECHAZAR", "RECHAZAR",
+                "거절", "ОТКЛОНИТЬ", "ODRZUĆ", "RECUSAR", "拒否", "拒绝");
+            Add("host_declined", "The host declined your request.", "L'hôte a refusé votre demande.", "L'host ha rifiutato la tua richiesta.", "Der Host hat deine Anfrage abgelehnt.",
+                "El anfitrión rechazó tu solicitud.", "El anfitrión rechazó tu solicitud.", "호스트가 참가 요청을 거절했습니다.", "Хост отклонил ваш запрос.",
+                "Host odrzucił twoją prośbę.", "O anfitrião recusou seu pedido.", "ホストが参加リクエストを拒否しました。", "主机拒绝了你的请求。");
+            Add("waiting_accept", "WAITING FOR {0} TO ACCEPT...", "EN ATTENTE DE LA CONFIRMATION DE {0}...", "IN ATTESA CHE {0} ACCETTI...", "WARTE AUF BESTÄTIGUNG VON {0}...",
+                "ESPERANDO A QUE {0} ACEPTE...", "ESPERANDO A QUE {0} ACEPTE...", "{0}님의 수락을 기다리는 중...", "ОЖИДАНИЕ ПОДТВЕРЖДЕНИЯ ОТ {0}...",
+                "CZEKANIE NA AKCEPTACJĘ {0}...", "AGUARDANDO {0} ACEITAR...", "{0}の承認を待っています...", "正在等待{0}接受...");
+            Add("resyncing", "Resynchronizing...", "Resynchronisation...", "Risincronizzazione...", "Synchronisiere neu...", "Resincronizando...", "Resincronizando...",
+                "다시 동기화하는 중...", "Повторная синхронизация...", "Ponowna synchronizacja...", "Ressincronizando...", "再同期しています...", "正在重新同步...");
         }
 
         // Test only: every text of one language column (to check the game fonts have all glyphs).

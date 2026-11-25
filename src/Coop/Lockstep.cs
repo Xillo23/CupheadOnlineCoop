@@ -93,6 +93,7 @@ namespace CupheadLanCoop
             Running = false;
             LocalStage = 0;
             LocalFlags = 0;
+            SoftResync.Reset();
             Cur = Neutral2(); Prev = Neutral2();
         }
 
@@ -135,6 +136,7 @@ namespace CupheadLanCoop
                 Prev = Cur; Cur = Neutral2();
                 return;
             }
+            Determinism.Enforce();
             Pad mine = Sample();
             mine.Stage = LocalStage;
             mine.Flags = LocalFlags;
@@ -171,6 +173,7 @@ namespace CupheadLanCoop
         {
             Stopwatch sw = Stopwatch.StartNew();
             long k = Key(Epoch, frame);
+            int nextLog = 1000;
             while (true)
             {
                 Pad p;
@@ -181,8 +184,15 @@ namespace CupheadLanCoop
                 Session.Pump();
                 if (!Active || !Running) return Pad.Neutral(axisCount);
                 long ms = sw.ElapsedMilliseconds;
+                // Peer already entered a scene loading barrier (e.g. after a desynced death/retry):
+                // break the WaitRemote vs LoadingEntryBarrier deadlock and rejoin them cleanly.
+                if (ms >= 1000 && Session.HasNextPeerDataHash())
+                {
+                    Session.FollowPeerLoading();
+                    return Pad.Neutral(axisCount);
+                }
                 if (ms > 8000) { Session.End(L.M("no_response")); return Pad.Neutral(axisCount); }
-                if (ms > 250 && ms % 1000 < 2) CoopPlugin.Log("Stallo rete: attendo frame " + frame + " da " + ms + " ms");
+                if (ms >= nextLog) { CoopPlugin.Log("Stallo rete: attendo frame " + frame + " da " + ms + " ms"); nextLog += 1000; }
                 Thread.Sleep(ms < 4 ? 0 : 1);
             }
         }
@@ -250,19 +260,29 @@ namespace CupheadLanCoop
 
         static int SlotOf(int rewiredPlayerId) { return rewiredPlayerId == 0 ? 0 : (rewiredPlayerId == 1 ? 1 : -1); }
 
+        public static void OnFixedUpdate()
+        {
+            if (Active && Running) SyncFixedStep();
+        }
+
+        static void SyncFixedStep()
+        {
+            float t = Time.fixedTime;
+            if (t != fixedStamp)
+            {
+                fixedStamp = t;
+                FixPrev = FixCur;
+                FixCur = new Pad[] { Cur[0], Cur[1] };
+            }
+        }
+
         // FixedUpdate reads see their own prev/cur pair, advanced once per fixed step,
         // so a "Down" edge is seen by exactly one fixed step (Rewired semantics).
         static void Pair(int slot, out Pad cur, out Pad prev)
         {
             if (Time.inFixedTimeStep)
             {
-                float t = Time.fixedTime;
-                if (t != fixedStamp)
-                {
-                    fixedStamp = t;
-                    FixPrev = FixCur;
-                    FixCur = new Pad[] { Cur[0], Cur[1] };
-                }
+                SyncFixedStep();
                 cur = FixCur[slot]; prev = FixPrev[slot];
             }
             else { cur = Cur[slot]; prev = Prev[slot]; }

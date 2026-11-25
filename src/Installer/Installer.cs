@@ -15,7 +15,7 @@ using Microsoft.Win32;
 
 [assembly: AssemblyTitle("Cuphead Online Co-op Installer")]
 [assembly: AssemblyProduct("Cuphead Online Co-op (unofficial fan mod)")]
-[assembly: AssemblyVersion("0.2.1.0")]
+[assembly: AssemblyVersion("0.2.2.0")]
 
 namespace CupheadOnlineCoopInstaller
 {

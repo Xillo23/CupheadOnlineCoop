@@ -10,7 +10,7 @@ namespace CupheadLanCoop
     public static class Msg
     {
         public const byte Hello = 1, Welcome = 2, Reject = 3, Start = 4, Input = 5, DataHash = 6, DataFix = 7,
-            Hash = 8, Ping = 9, Pong = 10, Bye = 11, Arrive = 12, Snap = 13;
+            Hash = 8, Ping = 9, Pong = 10, Bye = 11, Arrive = 12, Snap = 13, Resync = 14, Pending = 15;
 
         public static byte[] Build(Action<BinaryWriter> write)
         {

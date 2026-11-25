@@ -17,7 +17,7 @@ function Compile([string[]]$Arguments) {
     if ($LASTEXITCODE -ne 0) { throw "Build failed ($LASTEXITCODE)." }
 }
 $src = Join-Path $root 'src\Coop'
-$pure = @('InputCodec.cs', 'NetLink.cs', 'LanDiscovery.cs', 'PortOpener.cs') | ForEach-Object { Join-Path $src $_ }
+$pure = @('InputCodec.cs', 'NetLink.cs', 'LanDiscovery.cs', 'PortOpener.cs', 'SyncLogic.cs') | ForEach-Object { Join-Path $src $_ }
 
 if (-not $SkipTests) {
     # Pure parts (codec, framing, discovery) tested on the desktop CLR, no Unity.

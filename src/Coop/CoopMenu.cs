@@ -257,11 +257,73 @@ namespace CupheadLanCoop
 
         // Host chose the slot before player 2 arrived: native-styled waiting text over the slot screen.
         static Text waiting;
+        static string copiedIp = "";
+        static float copiedUntil;
+        static bool guestPopupOpen;
+        static int lastPasteFrame = -1;
+
+        static string PrimaryCopyIp()
+        {
+            PortOpener u = Session.Upnp;
+            PortState st = u == null ? PortState.Failed : u.State;
+            string pub = u == null ? "" : u.PublicIp;
+            int pubPort = u == null ? 0 : u.PublicPort;
+            return IpUtil.PickCopyIp(st, pub, pubPort, CoopPlugin.Port, NetAddresses.List());
+        }
+
+        static void CopyPrimaryIp()
+        {
+            string addr = PrimaryCopyIp();
+            if (addr.Length == 0) return;
+            GUIUtility.systemCopyBuffer = addr;
+            copiedIp = addr;
+            copiedUntil = Time.realtimeSinceStartup + 2.5f;
+            Sound(true);
+            CoopPlugin.Log("IP copiato negli appunti");
+        }
+
+        static void PasteIp()
+        {
+            if (lastPasteFrame == Time.frameCount) return;
+            lastPasteFrame = Time.frameCount;
+            string cleaned = IpUtil.SanitizeIp(GUIUtility.systemCopyBuffer, IpMax);
+            if (cleaned.Length == 0) return;
+            ip = cleaned;
+            Sound(true);
+        }
+
+        static void CheckGuestPopup()
+        {
+            if (guestPopupOpen && !Session.PendingGuest)
+            {
+                guestPopupOpen = false;
+                HidePopup();
+                return;
+            }
+            if (!Session.PendingGuest || PopupOpen) return;
+            string st = stateField.GetValue(screen).ToString();
+            if (st != "MainMenu" && st != "SlotSelect" && st != "PlayerSelect" && st != "ConfirmDelete") return;
+            guestPopupOpen = true;
+            if (!ShowPopup(
+                L.Tr("guest_title"),
+                L.Tr("guest_body", Session.PendingGuestName.ToUpper()),
+                new string[] { L.Tr("guest_accept"), L.Tr("guest_decline") },
+                new Action[] {
+                    delegate { guestPopupOpen = false; Session.AcceptGuest(); },
+                    delegate { guestPopupOpen = false; Session.RejectGuest(); }
+                },
+                delegate { guestPopupOpen = false; Session.RejectGuest(); }))
+            {
+                guestPopupOpen = false;
+                Session.AcceptGuest();
+            }
+        }
 
         public static void Tick()
         {
             if (screen == null || template == null) return;
             CheckUpnpFailure();
+            CheckGuestPopup();
             bool onSlots = stateField.GetValue(screen).ToString() != "MainMenu";
             bool show = Session.HostWaiting || (Session.State == CoopState.Hosting && onSlots);
             if (!show) { if (waiting != null && waiting.gameObject.activeSelf) waiting.gameObject.SetActive(false); return; }
@@ -279,7 +341,11 @@ namespace CupheadLanCoop
             }
             waiting.gameObject.SetActive(true);
             waiting.transform.SetAsLastSibling();
-            string text = L.Tr("waiting") + (Session.HostWaiting ? "   " + L.Tr("back_cancels") : "") + "\n" + string.Join("     ", AddressLines(true).ToArray());
+            if (!PopupOpen && Input.GetKeyDown(KeyCode.C)) CopyPrimaryIp();
+            bool showCopied = copiedIp.Length > 0 && Time.realtimeSinceStartup < copiedUntil;
+            string copyHint = showCopied ? L.Tr("ip_copied", copiedIp) : (PrimaryCopyIp().Length > 0 ? L.Tr("copy_ip_hint") : "");
+            string header = L.Tr("waiting") + (copyHint.Length > 0 ? "   " + copyHint : "") + (Session.HostWaiting ? "   " + L.Tr("back_cancels") : "");
+            string text = header + "\n" + string.Join("     ", AddressLines(true).ToArray());
             if (waiting.text != text) waiting.text = text;
             if (Session.HostWaiting && !PopupOpen && Press(CupheadButton.Cancel)) { Sound(true); Session.CancelHostWait(); }
         }
@@ -287,7 +353,7 @@ namespace CupheadLanCoop
         // Session started: nothing of ours may stay on screen.
         public static void CloseAll()
         {
-            try { HidePopup(); CloseSubmenu(); if (lanItem != null) lanItem.gameObject.SetActive(false); if (waiting != null) waiting.gameObject.SetActive(false); }
+            try { guestPopupOpen = false; HidePopup(); CloseSubmenu(); if (lanItem != null) lanItem.gameObject.SetActive(false); if (waiting != null) waiting.gameObject.SetActive(false); }
             catch (Exception) { }
         }
 
@@ -476,6 +542,12 @@ namespace CupheadLanCoop
                         List<string> addresses = AddressLines(false);
                         if (addresses.Count > 0) e.Add(new Entry(L.Tr("share_ip"), null, true));
                         foreach (string a in addresses) AddWrapped(e, a);
+                        string primary = PrimaryCopyIp();
+                        if (primary.Length > 0)
+                        {
+                            bool showCopied = copiedIp.Length > 0 && Time.realtimeSinceStartup < copiedUntil;
+                            e.Add(new Entry(showCopied ? L.Tr("ip_copied", copiedIp) : L.Tr("copy_ip"), CopyPrimaryIp, false));
+                        }
                     }
                     AddError(e);
                     e.Add(new Entry(L.Tr("cancel"), back, false));
@@ -496,13 +568,15 @@ namespace CupheadLanCoop
                     break;
                 case Page.Ip:
                     e.Add(new Entry("IP: " + ip + (editIp || (Time.realtimeSinceStartup % 1f) < 0.5f ? "_" : " "), delegate { editIp = !editIp; }, false));
+                    e.Add(new Entry(L.Tr("paste_ip"), PasteIp, false));
                     e.Add(new Entry(L.Tr("connect"), Connect, false));
                     AddError(e);
                     e.Add(new Entry(L.Tr("back"), delegate { Session.Browse(); Open(Page.Join); }, false));
                     back = delegate { Session.Browse(); Open(Page.Join); };
                     break;
                 case Page.Guest:
-                    if (Session.State == CoopState.Joining) e.Add(new Entry(L.Tr("connecting"), null, true));
+                    if (Session.State == CoopState.Joining)
+                        e.Add(new Entry(Session.WaitingHostAccept ? L.Tr("waiting_accept", Session.PeerName.ToUpper()) : L.Tr("connecting"), null, true));
                     else if (Session.State == CoopState.Connected)
                     {
                         e.Add(new Entry(L.Tr("connected_to", Session.PeerName.ToUpper()), null, true));
@@ -615,6 +689,7 @@ namespace CupheadLanCoop
             if (selected < 0) selected = 0;
             int focus = selectable.Count > 0 ? selectable[selected] : -1;
 
+            if (page == Page.Host && Input.GetKeyDown(KeyCode.C)) CopyPrimaryIp();
             if (page == Page.Ip) TypeIp(focus == 0);
             if (editIp && page == Page.Ip && focus == 0)
             {
@@ -634,9 +709,17 @@ namespace CupheadLanCoop
 
         static void TypeIp(bool focused)
         {
+            bool ctrl = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
+            bool shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+            if ((ctrl && Input.GetKeyDown(KeyCode.V)) || (shift && Input.GetKeyDown(KeyCode.Insert)))
+            {
+                PasteIp();
+                return;
+            }
             foreach (char c in Input.inputString)
             {
-                if (c == '\b') { if (ip.Length > 0) ip = ip.Substring(0, ip.Length - 1); }
+                if (c == '\x16') { PasteIp(); return; }
+                else if (c == '\b') { if (ip.Length > 0) ip = ip.Substring(0, ip.Length - 1); }
                 else if (c == '\n' || c == '\r') { Connect(); return; }
                 else if (IpChars.IndexOf(c) >= 0 && ip.Length < IpMax) ip += c;
             }

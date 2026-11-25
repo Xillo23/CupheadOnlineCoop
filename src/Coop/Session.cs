@@ -29,6 +29,16 @@ namespace CupheadLanCoop
         public static float NoticeUntil;
         public static int PingMs = -1;
         public static bool SaveGuardArmed;
+        public static bool PendingGuest { get; private set; }
+        public static string PendingGuestName = "";
+        public static bool WaitingHostAccept { get; private set; }
+
+        sealed class PeerLoadInfo
+        {
+            public uint Hash;
+            public string Scene;
+            public int Level;
+        }
 
         static NetHost listener;
         public static PortOpener Upnp; // null = UPnP off (config, test on one PC)
@@ -38,8 +48,8 @@ namespace CupheadLanCoop
         static readonly Stopwatch clock = Stopwatch.StartNew();
         static long lastPing;
         static double rttAverage = -1;
-        static int seed, loadSeq, resyncs;
-        static readonly Dictionary<int, uint> peerDataHash = new Dictionary<int, uint>();
+        static int seed, loadSeq, resyncs, hardResyncEpoch = -1;
+        static readonly Dictionary<int, PeerLoadInfo> peerDataHash = new Dictionary<int, PeerLoadInfo>();
         static readonly Dictionary<int, string> peerDataFix = new Dictionary<int, string>();
         static int peerArrived = -1;
         static int savedLanguage = -1;
@@ -118,6 +128,9 @@ namespace CupheadLanCoop
             if (discovery != null) discovery.Stop();
             discovery = null;
             welcomed = false;
+            PendingGuest = false;
+            PendingGuestName = "";
+            WaitingHostAccept = false;
             PeerName = "";
             PingMs = -1;
             rttAverage = -1;
@@ -166,7 +179,7 @@ namespace CupheadLanCoop
                 if (State == CoopState.InGame) End(L.Join(L.M("conn_lost"), reason));
                 else
                 {
-                    link = null; welcomed = false; PeerName = "";
+                    link = null; welcomed = false; PendingGuest = false; PendingGuestName = ""; WaitingHostAccept = false; PeerName = "";
                     if (IsHost && listener != null) State = CoopState.Hosting;
                     else { State = CoopState.Idle; Determinism.Background(false); if (Error.Length == 0) Error = reason; }
                 }
@@ -181,21 +194,41 @@ namespace CupheadLanCoop
             {
                 case Msg.Input: Lockstep.OnRemoteInput(m.Body); break;
                 case Msg.Hello: OnHello(r); break;
+                case Msg.Pending:
+                    if (!IsHost && State == CoopState.Joining)
+                    {
+                        PeerName = r.ReadString();
+                        WaitingHostAccept = true;
+                        CoopPlugin.Log("In attesa di conferma dall'host " + PeerName);
+                    }
+                    break;
                 case Msg.Welcome:
                     PeerName = r.ReadString();
+                    WaitingHostAccept = false;
                     welcomed = true;
                     State = CoopState.Connected;
                     CoopPlugin.Log("Accettato dall'host " + PeerName);
                     break;
                 case Msg.Reject:
                     Error = r.ReadString();
+                    WaitingHostAccept = false;
                     link.Close("rifiutato");
                     break;
                 case Msg.Start: if (!IsHost && State == CoopState.Connected) Begin(ReadStart(r)); break;
-                case Msg.DataHash: { int seq = r.ReadInt32(); peerDataHash[seq] = r.ReadUInt32(); break; }
+                case Msg.DataHash:
+                    {
+                        int seq = r.ReadInt32();
+                        PeerLoadInfo info = new PeerLoadInfo();
+                        info.Hash = r.ReadUInt32();
+                        info.Scene = r.BaseStream.Position < r.BaseStream.Length ? r.ReadString() : "";
+                        info.Level = r.BaseStream.Position < r.BaseStream.Length ? r.ReadInt32() : (int)SceneLoader.CurrentLevel;
+                        peerDataHash[seq] = info;
+                        break;
+                    }
                 case Msg.DataFix: { int seq = r.ReadInt32(); peerDataFix[seq] = r.ReadString(); break; }
                 case Msg.Arrive: peerArrived = Math.Max(peerArrived, r.ReadInt32()); break;
                 case Msg.Snap: SoftResync.OnSnap(m.Body); break;
+                case Msg.Resync: OnRemoteResync(r); break;
                 case Msg.Hash: { int e = r.ReadInt32(); int f = r.ReadInt32(); DesyncCheck.OnRemote(e, f, r.ReadString()); break; }
                 case Msg.Ping: { long t = r.ReadInt64(); link.Send(Msg.Pong, Msg.Build(delegate(BinaryWriter w) { w.Write(t); })); break; }
                 case Msg.Pong:
@@ -217,7 +250,7 @@ namespace CupheadLanCoop
 
         static void OnHello(BinaryReader r)
         {
-            if (!IsHost || welcomed) return;
+            if (!IsHost || welcomed || PendingGuest) return;
             int protocol = r.ReadInt32();
             string version = r.ReadString(), name = r.ReadString();
             int n = r.ReadInt32();
@@ -236,11 +269,45 @@ namespace CupheadLanCoop
                 Error = L.Join(L.M("rejected", name), reason);
                 return;
             }
+            if (CoopPlugin.AutoPair) { AcceptGuestNow(name); return; }
+            PendingGuest = true;
+            PendingGuestName = name;
+            link.Send(Msg.Pending, Msg.Build(delegate(BinaryWriter w) { w.Write(CoopPlugin.PlayerName); }));
+            CoopPlugin.Log("Richiesta di connessione da " + name + ": attendo conferma host");
+        }
+
+        static void AcceptGuestNow(string name)
+        {
+            PendingGuest = false;
+            PendingGuestName = "";
             PeerName = name;
             welcomed = true;
             State = CoopState.Connected;
-            link.Send(Msg.Welcome, Msg.Build(delegate(BinaryWriter w) { w.Write(CoopPlugin.PlayerName); }));
+            if (link != null) link.Send(Msg.Welcome, Msg.Build(delegate(BinaryWriter w) { w.Write(CoopPlugin.PlayerName); }));
             CoopPlugin.Log("Ospite accettato: " + name);
+        }
+
+        public static void AcceptGuest()
+        {
+            if (!IsHost || !PendingGuest) return;
+            if (link == null || !link.Connected) { PendingGuest = false; PendingGuestName = ""; return; }
+            AcceptGuestNow(PendingGuestName);
+        }
+
+        public static void RejectGuest()
+        {
+            if (!IsHost || !PendingGuest) return;
+            string name = PendingGuestName;
+            PendingGuest = false;
+            PendingGuestName = "";
+            CoopPlugin.Log("Ospite rifiutato dall'host: " + name);
+            if (link != null)
+            {
+                link.Send(Msg.Reject, Msg.Build(delegate(BinaryWriter w) { w.Write(L.M("host_declined")); }));
+                link.Close("rifiutato dall'host");
+            }
+            link = null;
+            if (listener != null) State = CoopState.Hosting;
         }
 
         static string CompareFingerprint(Dictionary<string, string> theirs)
@@ -343,9 +410,10 @@ namespace CupheadLanCoop
             CoopPlugin.Log("Inizio sessione: host=" + IsHost + " slot=" + s.Slot + " vuoto=" + s.Empty + " D=" + s.Delay + " ping=" + PingMs);
             if (discovery != null) { discovery.Stop(); discovery = null; }
             State = CoopState.InGame;
-            seed = s.Seed; loadSeq = 0; resyncs = 0; peerArrived = -1;
+            seed = s.Seed; loadSeq = 0; resyncs = 0; peerArrived = -1; hardResyncEpoch = -1;
             peerDataHash.Clear(); peerDataFix.Clear();
             DesyncCheck.Reset();
+            ResetHubStatics();
             savedLanguage = (int)Localization.language;
             savedRotate = SettingsData.Data.rotateControlsWithCamera;
             if (CoopPlugin.TestNoSave) { SaveGuardArmed = true; CoopPlugin.Log("Test: salvataggi disattivati anche sull'host"); }
@@ -455,6 +523,81 @@ namespace CupheadLanCoop
             PlayerManager.Multiplayer = false;
         }
 
+        static void ResetHubStatics()
+        {
+            try
+            {
+                FieldInfo dp = typeof(DicePalaceMainLevelGameInfo).GetField("gameInfo", BindingFlags.Static | BindingFlags.NonPublic);
+                object dpObj = dp == null ? null : dp.GetValue(null);
+                if (dpObj != null) ((DicePalaceMainLevelGameInfo)dpObj).CleanUp();
+                else
+                {
+                    if (DicePalaceMainLevelGameInfo.SAFE_INDEXES != null) DicePalaceMainLevelGameInfo.SAFE_INDEXES.Clear();
+                    DicePalaceMainLevelGameInfo.TURN_COUNTER = 0;
+                    DicePalaceMainLevelGameInfo.PLAYER_SPACES_MOVED = 0;
+                    DicePalaceMainLevelGameInfo.PLAYER_ONE_STATS = null;
+                    DicePalaceMainLevelGameInfo.PLAYER_TWO_STATS = null;
+                    DicePalaceMainLevelGameInfo.PLAYED_INTRO_SFX = false;
+                    DicePalaceMainLevelGameInfo.CHALICE_PLAYER = -1;
+                    DicePalaceMainLevelGameInfo.IS_FIRST_ENTRY = true;
+                }
+            }
+            catch (Exception ex) { CoopPlugin.Log("Reset DicePalaceGameInfo: " + ex.Message); }
+            try
+            {
+                FieldInfo tp = typeof(TowerOfPowerLevelGameInfo).GetField("gameInfo", BindingFlags.Static | BindingFlags.NonPublic);
+                object tpObj = tp == null ? null : tp.GetValue(null);
+                if (tpObj != null) ((TowerOfPowerLevelGameInfo)tpObj).CleanUp();
+            }
+            catch (Exception ex) { CoopPlugin.Log("Reset TowerOfPowerGameInfo: " + ex.Message); }
+        }
+
+        static void OverrideTargetScene(string scene, int level)
+        {
+            try
+            {
+                SceneLoader.SetCurrentLevel((Levels)level);
+                PropertyInfo prop = typeof(SceneLoader).GetProperty("SceneName", BindingFlags.Static | BindingFlags.Public);
+                MethodInfo setter = prop == null ? null : prop.GetSetMethod(true);
+                if (setter != null) setter.Invoke(null, new object[] { scene });
+            }
+            catch (Exception ex) { CoopPlugin.Log("OverrideTargetScene fallito: " + ex.Message); }
+        }
+
+        static void ReloadSceneForResync(string scene, int level)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(scene)) return;
+                if (PauseManager.state == PauseManager.State.Paused) PauseManager.Unpause();
+                SceneLoader.SetCurrentLevel((Levels)level);
+                SceneLoader.LoadScene(scene, SceneLoader.Transition.Fade, SceneLoader.Transition.Fade);
+            }
+            catch (Exception ex) { CoopPlugin.Log("ReloadSceneForResync fallito: " + ex.Message); }
+        }
+
+        public static bool HasNextPeerDataHash()
+        {
+            return State == CoopState.InGame && peerDataHash.ContainsKey(loadSeq + 1);
+        }
+
+        // Peer already entered LoadingEntryBarrier for loadSeq+1 while we were stuck in WaitRemote.
+        // Break the deadlock cleanly by aligning our loading transition with the peer's.
+        public static void FollowPeerLoading()
+        {
+            PeerLoadInfo info;
+            if (!peerDataHash.TryGetValue(loadSeq + 1, out info)) return;
+            Lockstep.EnterLoading();
+            if (SceneLoader.CurrentlyLoading)
+            {
+                CoopPlugin.Log("Recupero barriera: libero in_cr per raggiungere il compagno (" + info.Scene + ")");
+                return;
+            }
+            CoopPlugin.Log("Recupero barriera: il compagno sta caricando " + info.Scene + ", mi riallineo");
+            ShowNotice(L.M("resyncing"));
+            ReloadSceneForResync(info.Scene, info.Level);
+        }
+
         // ---------- barriers ----------
 
         // Both PCs at the same lockstep frame (after in_cr): same progression or the host's wins.
@@ -464,12 +607,19 @@ namespace CupheadLanCoop
             int seq = loadSeq;
             string json = JsonUtility.ToJson(PlayerData.Data);
             uint h = Fnv.Add(Fnv.Seed, json);
-            Send(Msg.DataHash, delegate(BinaryWriter w) { w.Write(seq); w.Write(h); });
-            CoopPlugin.Log("Barriera dati seq=" + seq + " hash=" + h.ToString("x8") + " link=" + (link != null && link.Connected));
-            uint theirs = 0;
+            string targetScene = SceneLoader.SceneName ?? "";
+            int targetLevel = (int)SceneLoader.CurrentLevel;
+            Send(Msg.DataHash, delegate(BinaryWriter w) { w.Write(seq); w.Write(h); w.Write(targetScene); w.Write(targetLevel); });
+            CoopPlugin.Log("Barriera dati seq=" + seq + " hash=" + h.ToString("x8") + " sc=" + targetScene + " link=" + (link != null && link.Connected));
+            PeerLoadInfo theirs = null;
             if (!Wait(delegate { return peerDataHash.TryGetValue(seq, out theirs); }, 30000, "salvataggio del compagno")) return;
             peerDataHash.Remove(seq);
-            if (theirs == h) return;
+            if (!IsHost && theirs != null && !string.IsNullOrEmpty(theirs.Scene) && theirs.Scene != targetScene)
+            {
+                CoopPlugin.Log("Scene diverse alla barriera " + seq + ": seguo l'host verso " + theirs.Scene);
+                OverrideTargetScene(theirs.Scene, theirs.Level);
+            }
+            if (theirs.Hash == h) return;
             CoopPlugin.Log("PlayerData diverso al caricamento " + seq + ": l'host corregge l'ospite");
             if (IsHost) Send(Msg.DataFix, delegate(BinaryWriter w) { w.Write(seq); w.Write(json); });
             else
@@ -521,23 +671,59 @@ namespace CupheadLanCoop
             Send(Msg.Hash, delegate(BinaryWriter w) { w.Write(epoch); w.Write(frame); w.Write(detail); });
         }
 
-        // A desync never sends the players back to the level start: the host raises a flag (executed on both
-        // PCs in the same lockstep frame) and there the guest copies the host's RNG state and super meters.
+        // A soft desync (RNG/super only) never reloads the level: the host raises a flag (executed on both
+        // PCs in the same lockstep frame) and the guest copies the host's RNG state and super meters.
         public static void OnDesync()
         {
             if (IsHost && !SoftResync.Pending) { SoftResync.Pending = true; Lockstep.LocalFlags |= Lockstep.FlagResync; }
+        }
+
+        // Sustained structural desync (diverged HP, positions, scene or fixed-steps): reload the scene
+        // together instead of drifting into separate worlds and hitting the 8-second deadlock on death.
+        public static void OnHardDesync()
+        {
+            if (!IsHost || State != CoopState.InGame || !Lockstep.Running || SceneLoader.CurrentlyLoading) return;
+            if (hardResyncEpoch == Lockstep.Epoch) return;
+            hardResyncEpoch = Lockstep.Epoch;
+            string scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+            int level = (int)SceneLoader.CurrentLevel;
+            CoopPlugin.Log("Desync persistente: ricarico la scena " + scene + " epoch=" + Lockstep.Epoch);
+            Send(Msg.Resync, delegate(BinaryWriter w) { w.Write(Lockstep.Epoch); w.Write(scene); w.Write(level); });
+            ShowNotice(L.M("resyncing"));
+            Lockstep.EnterLoading();
+            ReloadSceneForResync(scene, level);
+        }
+
+        static void OnRemoteResync(BinaryReader r)
+        {
+            int epoch = r.ReadInt32();
+            string scene = r.ReadString();
+            int level = r.ReadInt32();
+            if (IsHost || State != CoopState.InGame || epoch != Lockstep.Epoch || hardResyncEpoch == epoch) return;
+            hardResyncEpoch = epoch;
+            CoopPlugin.Log("Desync persistente: l'host ricarica " + scene + " epoch=" + epoch);
+            ShowNotice(L.M("resyncing"));
+            Lockstep.EnterLoading();
+            if (!SceneLoader.CurrentlyLoading) ReloadSceneForResync(scene, level);
         }
 
         // Executed on both PCs in the same lockstep frame.
         public static void OnResyncFlag()
         {
             SoftResync.Pending = false;
-            if (SceneLoader.CurrentlyLoading) return;
             resyncs++;
             int e = Lockstep.Epoch, f = Lockstep.Frame;
             CoopPlugin.Log("Correzione sincronizzazione " + resyncs + " su " + SceneLoader.SceneName + " frame=" + f);
-            if (IsHost) { if (link != null) link.Send(Msg.Snap, SoftResync.Capture(e, f)); }
-            else if (Wait(delegate { return SoftResync.Has(e, f); }, 8000, "stato host")) SoftResync.Apply();
+            if (IsHost)
+            {
+                // Always send Snap even if CurrentlyLoading changed, so the guest never stalls waiting for it.
+                if (link != null) link.Send(Msg.Snap, SoftResync.Capture(e, f));
+            }
+            else if (!SceneLoader.CurrentlyLoading)
+            {
+                if (Wait(delegate { return SoftResync.Has(e, f) || SceneLoader.CurrentlyLoading || HasNextPeerDataHash(); }, 8000, "stato host") && SoftResync.Has(e, f))
+                    SoftResync.Apply();
+            }
             DesyncCheck.IgnoreUpTo(e, f);
         }
 
@@ -560,6 +746,10 @@ namespace CupheadLanCoop
             listener = null;
             StopUpnp();
             welcomed = false;
+            PendingGuest = false;
+            PendingGuestName = "";
+            WaitingHostAccept = false;
+            hardResyncEpoch = -1;
             State = CoopState.Idle;
             pendingStart = null;
             Lockstep.Stop();
@@ -604,6 +794,9 @@ namespace CupheadLanCoop
             }
             Patch(h, missing, AccessTools.Method(typeof(PlayerData), "Init"), typeof(Session).GetMethod("PlayerDataInitPrefix", BindingFlags.Static | BindingFlags.NonPublic));
             Patch(h, missing, AccessTools.Method(typeof(PlayerManager), "PlayerLeave"), typeof(Session).GetMethod("PlayerLeavePrefix", BindingFlags.Static | BindingFlags.NonPublic));
+            Patch(h, missing, AccessTools.Method(typeof(PlayerManager), "OnControllerDisconnected"), typeof(Session).GetMethod("SkipWhileLockstep", BindingFlags.Static | BindingFlags.NonPublic));
+            Patch(h, missing, AccessTools.Method(typeof(PlayerManager), "ControllerRemapped"), typeof(Session).GetMethod("SkipWhileLockstep", BindingFlags.Static | BindingFlags.NonPublic));
+            Patch(h, missing, AccessTools.Method(typeof(PlayerManager), "IsControllerDisconnected"), typeof(Session).GetMethod("FalseWhileLockstep", BindingFlags.Static | BindingFlags.NonPublic));
             Patch(h, missing, AccessTools.Method(typeof(SlotSelectScreen), "EnterGame"), typeof(Session).GetMethod("EnterGamePrefix", BindingFlags.Static | BindingFlags.NonPublic));
         }
 
@@ -645,6 +838,8 @@ namespace CupheadLanCoop
         }
 
         static bool PlayerLeavePrefix() { return !Lockstep.Active; }
+        static bool SkipWhileLockstep() { return !Lockstep.Active; }
+        static bool FalseWhileLockstep(ref bool __result) { if (!Lockstep.Active) return true; __result = false; return false; }
 
         static bool EnterGamePrefix(SlotSelectScreen __instance)
         {

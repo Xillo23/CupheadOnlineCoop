@@ -15,7 +15,8 @@
 - Menu in stile nativo, in 12 lingue (segue la lingua del gioco).
 - Installer con un clic, che trova Cuphead da solo e ha un pulsante per disinstallare.
 - Salva solo nello slot dell'host; il PC dell'ospite non scrive niente.
-- Se le due partite si discostano di poco, le corregge al volo senza mai ricominciare il livello.
+- Correzione automatica dei desync: i piccoli scostamenti vengono corretti al volo in silenzio, mentre i desync persistenti risincronizzano la scena invece di scollegare la partita dopo 8 secondi.
+- Popup nativo **Accetta / Rifiuta** sull'host quando entra un giocatore, più **Copia IP** (tasto C) e **Incolla IP / Ctrl+V**.
 
 ## Installazione
 

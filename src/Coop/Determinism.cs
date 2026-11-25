@@ -97,5 +97,15 @@ namespace CupheadLanCoop
         {
             if (applied) Time.timeScale = 1f;
         }
+
+        // Keeps timing deterministic even if the options menu or game code overwrites vSync/targetFrameRate mid-session.
+        public static void Enforce()
+        {
+            if (!applied) return;
+            if (QualitySettings.vSyncCount != 0) QualitySettings.vSyncCount = 0;
+            if (Time.captureFramerate != 60) Time.captureFramerate = 60;
+            if (Application.targetFrameRate != 60) Application.targetFrameRate = 60;
+            if (Mathf.Abs(Time.fixedDeltaTime - (1f / 60f)) > 1e-6f) Time.fixedDeltaTime = 1f / 60f;
+        }
     }
 }

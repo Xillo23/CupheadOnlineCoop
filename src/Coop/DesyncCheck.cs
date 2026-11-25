@@ -13,6 +13,7 @@ namespace CupheadLanCoop
         public static int Checked, Mismatches;
         static long fixedSteps;
         static readonly Dictionary<long, string> mine = new Dictionary<long, string>(), theirs = new Dictionary<long, string>();
+        static readonly HardDesyncTracker hardTracker = new HardDesyncTracker();
         static FieldInfo[] rngFields;
         static long ignoreUpTo = -1;
 
@@ -30,6 +31,7 @@ namespace CupheadLanCoop
         {
             fixedSteps = 0;
             ignoreUpTo = -1;
+            hardTracker.Reset();
             SoftResync.Reset();
             mine.Clear(); theirs.Clear();
         }
@@ -63,12 +65,15 @@ namespace CupheadLanCoop
             if (!mine.TryGetValue(k, out a) || !theirs.TryGetValue(k, out b)) return;
             mine.Remove(k); theirs.Remove(k);
             Checked++;
-            if (a == b) return;
+            if (a == b) { hardTracker.OnMatch(); return; }
             Mismatches++;
-            CoopPlugin.Log("DESYNC epoch=" + (k >> 32) + " frame=" + (int)k + "\n  locale: " + a + "\n  remoto: " + b);
+            bool fatalHp;
+            DesyncKind kind = DesyncClassifier.Classify(a, b, out fatalHp);
+            CoopPlugin.Log("DESYNC (" + kind + ") epoch=" + (k >> 32) + " frame=" + (int)k + "\n  locale: " + a + "\n  remoto: " + b);
             if (RandomTrace.Enabled)
                 CoopPlugin.Log("TRACCIA frame " + (int)k + ": " + RandomTrace.Dump(k) + "\n  frame precedente: " + RandomTrace.Dump(k - 1));
-            Session.OnDesync();
+            if (hardTracker.OnMismatch(kind, fatalHp)) Session.OnHardDesync();
+            else Session.OnDesync();
         }
 
         static string Describe()

@@ -26,7 +26,9 @@
 - **12 languages**: the mod follows the game language (English, French, Italian, German, Spanish (Spain and Latin America), Korean, Russian, Polish, Brazilian Portuguese, Japanese, Simplified Chinese).
 - **One-click installer**: finds Cuphead by itself (Steam / GOG) and has a clean Uninstall button.
 - **Safe for saves**: progress is saved only in the host's save slot. The guest's PC writes nothing.
-- **Self-correcting**: if the two games drift apart slightly, the mod fixes it on the fly. It never restarts the level.
+- **Self-correcting**: small desyncs are fixed silently on the fly without interrupting play, and persistent desyncs automatically resync the scene instead of disconnecting after 8 seconds.
+- **Host accept/decline popup**: when someone connects, the host sees a native-style popup with the player's name to accept or decline before the game starts.
+- **Copy & paste IP**: press **C** while hosting to copy your IP, and use **PASTE IP** or **Ctrl+V** when joining.
 - **Opens the router port by itself (UPnP)** when you host, also with two routers in a row (provider modem + your router), and closes it when you stop. It asks the first time.
 - **Finds games automatically** on the same network and on most virtual LANs (e.g. Radmin VPN, ZeroTier). You can always connect by IP.
 

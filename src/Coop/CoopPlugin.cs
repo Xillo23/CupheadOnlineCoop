@@ -13,10 +13,11 @@ namespace CupheadLanCoop
     [BepInPlugin("it.cupheadlan.coop", "Cuphead LAN Co-op (lockstep)", Version)]
     public sealed class CoopPlugin : BaseUnityPlugin
     {
-        public const string Version = "0.2.1";
+        public const string Version = "0.2.2";
         public static int Port = 28147, DiscoveryPort = 28148, InputDelay;
         public static string PlayerName = "Giocatore";
         public static bool TestNoSave, DumpUi;
+        public static bool AutoPair { get { return autoPair; } }
         static ConfigEntry<string> upnpEntry;
         static ConfigFile config;
 
@@ -149,7 +150,11 @@ namespace CupheadLanCoop
 
         void FixedUpdate()
         {
-            if (Lockstep.Active) Lockstep.FixedStepsThisFrame++;
+            if (Lockstep.Active)
+            {
+                Lockstep.FixedStepsThisFrame++;
+                Lockstep.OnFixedUpdate();
+            }
         }
 
         IEnumerator EndOfFrameLoop()

@@ -121,6 +121,49 @@ static class CoopTests
         Check(status == 200 && chunked == "hello world", "http chunked");
         Check(PortOpener.ParseResponse(System.Text.Encoding.ASCII.GetBytes("HTTP/1.0 500 Internal Server Error\r\nContent-Length: 3\r\n\r\nabc"), out status) == "abc" && status == 500, "http plain");
 
+        // Desync classification (reproduces real 2-PC logs: soft rng/sm vs hard hp/pos/scene/fx).
+        bool fatalHp;
+        string baseA = "f=1560 fx=1560 sc=scene_level_mouse rng=386b8384 p1=439f1556,c37f7899,hp3,sm41f9666c p2=4381aaa3,c3847f98,hp2,sm41fac000";
+        string softRng = "f=1560 fx=1560 sc=scene_level_mouse rng=4134988f p1=439f1556,c37f7899,hp3,sm41f9666c p2=4381aaa3,c3847f98,hp2,sm41fac000";
+        string softSm = "f=1560 fx=1560 sc=scene_level_mouse rng=386b8384 p1=439f1556,c37f7899,hp3,sm41cea012 p2=4381aaa3,c3847f98,hp2,sm41fac000";
+        string hardHpAlive = "f=1560 fx=1560 sc=scene_level_mouse rng=386b8384 p1=439f1556,c37f7899,hp3,sm41f9666c p2=4381aaa3,c3847f98,hp1,sm41fac000";
+        string hardHpFatal = "f=1560 fx=1560 sc=scene_level_mouse rng=386b8384 p1=439f1556,c37f7899,hp3,sm41f9666c p2=4381aaa3,c3847f98,hp0,sm41fac000";
+        string hardPos = "f=1560 fx=1560 sc=scene_level_mouse rng=386b8384 p1=439f1556,c37f7899,hp3,sm41f9666c p2=44100000,c3847f98,hp2,sm41fac000";
+        string hardScene = "f=1560 fx=1560 sc=scene_map_world_1 rng=386b8384 p1=439f1556,c37f7899,hp3,sm41f9666c p2=4381aaa3,c3847f98,hp2,sm41fac000";
+        string hardFx = "f=1560 fx=1561 sc=scene_level_mouse rng=386b8384 p1=439f1556,c37f7899,hp3,sm41f9666c p2=4381aaa3,c3847f98,hp2,sm41fac000";
+        Check(DesyncClassifier.Classify(baseA, baseA, out fatalHp) == DesyncKind.None && !fatalHp, "desync none");
+        Check(DesyncClassifier.Classify(baseA, softRng, out fatalHp) == DesyncKind.Soft && !fatalHp, "desync soft rng");
+        Check(DesyncClassifier.Classify(baseA, softSm, out fatalHp) == DesyncKind.Soft && !fatalHp, "desync soft sm");
+        Check(DesyncClassifier.Classify(baseA, hardHpAlive, out fatalHp) == DesyncKind.Hard && !fatalHp, "desync hard hp alive");
+        Check(DesyncClassifier.Classify(baseA, hardHpFatal, out fatalHp) == DesyncKind.Hard && fatalHp, "desync hard hp fatal");
+        Check(DesyncClassifier.Classify(baseA, hardPos, out fatalHp) == DesyncKind.Hard && !fatalHp, "desync hard pos");
+        Check(DesyncClassifier.Classify(baseA, hardScene, out fatalHp) == DesyncKind.Hard, "desync hard scene");
+        Check(DesyncClassifier.Classify(baseA, hardFx, out fatalHp) == DesyncKind.Hard, "desync hard fx");
+
+        // HardDesyncTracker escalation: soft never triggers; fatal hp triggers on 2nd; other hard on 3rd; match resets.
+        HardDesyncTracker tracker = new HardDesyncTracker();
+        Check(!tracker.OnMismatch(DesyncKind.Soft, false) && !tracker.OnMismatch(DesyncKind.Soft, false), "tracker ignores soft");
+        Check(!tracker.OnMismatch(DesyncKind.Hard, false) && !tracker.OnMismatch(DesyncKind.Hard, false) && tracker.OnMismatch(DesyncKind.Hard, false), "tracker 3 hard");
+        tracker.OnMatch();
+        Check(tracker.ConsecutiveHard == 0, "tracker reset on match");
+        Check(!tracker.OnMismatch(DesyncKind.Hard, true) && tracker.OnMismatch(DesyncKind.Hard, true), "tracker 2 fatal hp");
+
+        // Clipboard IP sanitize and primary host IP pick.
+        Check(IpUtil.SanitizeIp("  203.0.113.7 \r\n", 21) == "203.0.113.7", "sanitize plain ip");
+        Check(IpUtil.SanitizeIp("INTERNET: 203.0.113.7:28148 (PORT OPENED)", 21) == "203.0.113.7:28148", "sanitize labeled ip:port");
+        Check(IpUtil.SanitizeIp("RADMIN 26.12.34.56", 21) == "26.12.34.56", "sanitize vpn label");
+        Check(IpUtil.SanitizeIp("not an ip at all", 21) == "", "sanitize garbage");
+        var sampleAddrs = new System.Collections.Generic.List<NetAddress>(new NetAddress[] {
+            new NetAddress(NetKind.Lan, IPAddress.Parse("192.168.1.20"), true),
+            new NetAddress(NetKind.Radmin, IPAddress.Parse("26.12.34.56"), false)
+        });
+        Check(IpUtil.PickCopyIp(PortState.Open, "203.0.113.7", 28147, 28147, sampleAddrs) == "203.0.113.7", "pick upnp public ip");
+        Check(IpUtil.PickCopyIp(PortState.Open, "203.0.113.7", 28149, 28147, sampleAddrs) == "203.0.113.7:28149", "pick upnp alt port");
+        Check(IpUtil.PickCopyIp(PortState.Failed, "", 0, 28147, sampleAddrs) == "26.12.34.56", "pick vpn over lan");
+        var lanOnly = new System.Collections.Generic.List<NetAddress>(new NetAddress[] { new NetAddress(NetKind.Lan, IPAddress.Parse("192.168.1.20"), true) });
+        Check(IpUtil.PickCopyIp(PortState.Failed, "", 0, 28147, lanOnly) == "192.168.1.20", "pick lan fallback");
+        Check(Msg.Resync == 14 && Msg.Pending == 15, "new msg ids");
+
         Console.WriteLine((failures == 0 ? "PASS " : "FAIL ") + (checks - failures) + "/" + checks + " controlli coop");
         return failures == 0 ? 0 : 1;
     }
